@@ -1,41 +1,31 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useCart } from "@/hooks/use-cart";
-
-interface Item {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  image_url: string | null;
-  badge: "none" | "new" | "bestseller" | "healthy";
-}
+import { useCart, formatUGX } from "@/hooks/use-cart";
+import { MenuItemModal, type MenuItemLite } from "./MenuItemModal";
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&q=80";
 
-function formatUGX(n: number) {
-  return `UGX ${Number(n).toLocaleString("en-US")}`;
-}
-
-async function fetchPopular(): Promise<Item[]> {
+async function fetchPopular(): Promise<MenuItemLite[] & { badge?: string }[]> {
   const { data, error } = await supabase
     .from("menu_items")
-    .select("id, name, description, price, image_url, badge")
+    .select("id, name, description, price, image_url, badge, ingredients, allergens")
     .eq("is_available", true)
     .limit(12);
   if (error) throw error;
-  return ((data ?? []) as Item[]).sort((a, b) => {
-    const aHas = a.badge !== "none" ? 0 : 1;
-    const bHas = b.badge !== "none" ? 0 : 1;
+  return ((data ?? []) as (MenuItemLite & { badge: string })[]).sort((a, b) => {
+    const aHas = (a as { badge: string }).badge !== "none" ? 0 : 1;
+    const bHas = (b as { badge: string }).badge !== "none" ? 0 : 1;
     return aHas - bHas;
-  });
+  }) as MenuItemLite[] & { badge?: string }[];
 }
 
 export function PopularPicks() {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const { add } = useCart();
+  const [selected, setSelected] = useState<MenuItemLite | null>(null);
   const { data: items = [] } = useQuery({ queryKey: ["popular-picks"], queryFn: fetchPopular });
 
   const scroll = (dir: 1 | -1) => {
@@ -82,10 +72,11 @@ export function PopularPicks() {
             className="scrollbar-none flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4"
             style={{ scrollbarWidth: "none" }}
           >
-            {items.map((item) => (
+            {(items as (MenuItemLite & { badge?: string })[]).map((item) => (
               <article
                 key={item.id}
-                className="motion-card-lift group relative flex w-[260px] shrink-0 snap-start flex-col overflow-hidden rounded-[20px] bg-card shadow-soft"
+                onClick={() => setSelected(item)}
+                className="motion-card-lift group relative flex w-[260px] shrink-0 cursor-pointer snap-start flex-col overflow-hidden rounded-[20px] bg-card shadow-soft"
               >
                 <div className="motion-image-zoom relative aspect-[4/3] overflow-hidden rounded-b-none">
                   <img
@@ -94,7 +85,7 @@ export function PopularPicks() {
                     className="h-full w-full object-cover"
                     loading="lazy"
                   />
-                  {item.badge !== "none" && (
+                  {item.badge && item.badge !== "none" && (
                     <span className="absolute top-3 left-3 rounded-full bg-primary px-3 py-1 text-[10px] font-bold tracking-wider text-primary-foreground uppercase">
                       {item.badge}
                     </span>
@@ -111,14 +102,17 @@ export function PopularPicks() {
                     <p className="text-lg font-bold text-secondary">{formatUGX(item.price)}</p>
                     <button
                       aria-label={`Add ${item.name} to cart`}
-                      onClick={() =>
+                      onClick={(e) => {
+                        e.stopPropagation();
                         add({
-                          id: item.id,
+                          menuItemId: item.id,
                           name: item.name,
-                          price: Number(item.price),
+                          basePrice: Number(item.price),
                           imageUrl: item.image_url,
-                        })
-                      }
+                          options: [],
+                        });
+                        toast.success(`${item.name} added`);
+                      }}
                       className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-soft transition-transform hover:scale-110"
                     >
                       <Plus className="h-5 w-5" />
@@ -133,6 +127,7 @@ export function PopularPicks() {
           </div>
         </div>
       </div>
+      <MenuItemModal item={selected} onClose={() => setSelected(null)} />
     </section>
   );
 }

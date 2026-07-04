@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { Toaster } from "sonner";
 import { CartProvider } from "@/hooks/use-cart";
+import { CartDrawer } from "@/components/customer/CartDrawer";
 import { Header } from "@/components/customer/Header";
 import { Footer } from "@/components/customer/Footer";
 
@@ -17,6 +19,8 @@ function CustomerLayout() {
           <Outlet />
         </main>
         <Footer />
+        <CartDrawer />
+        <Toaster position="top-center" richColors closeButton />
       </div>
     </CartProvider>
   );
