@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as KitchenRouteImport } from './routes/kitchen'
 import { Route as DriverRouteImport } from './routes/driver'
 import { Route as CustomerRouteImport } from './routes/customer'
+import { Route as CateringRouteImport } from './routes/catering'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -33,6 +34,11 @@ const DriverRoute = DriverRouteImport.update({
 const CustomerRoute = CustomerRouteImport.update({
   id: '/customer',
   path: '/customer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CateringRoute = CateringRouteImport.update({
+  id: '/catering',
+  path: '/catering',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/catering': typeof CateringRoute
   '/customer': typeof CustomerRouteWithChildren
   '/driver': typeof DriverRouteWithChildren
   '/kitchen': typeof KitchenRouteWithChildren
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/catering': typeof CateringRoute
   '/admin': typeof AdminIndexRoute
   '/customer': typeof CustomerIndexRoute
   '/driver': typeof DriverIndexRoute
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/catering': typeof CateringRoute
   '/customer': typeof CustomerRouteWithChildren
   '/driver': typeof DriverRouteWithChildren
   '/kitchen': typeof KitchenRouteWithChildren
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/catering'
     | '/customer'
     | '/driver'
     | '/kitchen'
@@ -118,12 +128,20 @@ export interface FileRouteTypes {
     | '/driver/'
     | '/kitchen/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/admin' | '/customer' | '/driver' | '/kitchen'
+  to:
+    | '/'
+    | '/auth'
+    | '/catering'
+    | '/admin'
+    | '/customer'
+    | '/driver'
+    | '/kitchen'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/auth'
+    | '/catering'
     | '/customer'
     | '/driver'
     | '/kitchen'
@@ -137,6 +155,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CateringRoute: typeof CateringRoute
   CustomerRoute: typeof CustomerRouteWithChildren
   DriverRoute: typeof DriverRouteWithChildren
   KitchenRoute: typeof KitchenRouteWithChildren
@@ -163,6 +182,13 @@ declare module '@tanstack/react-router' {
       path: '/customer'
       fullPath: '/customer'
       preLoaderRoute: typeof CustomerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catering': {
+      id: '/catering'
+      path: '/catering'
+      fullPath: '/catering'
+      preLoaderRoute: typeof CateringRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -265,6 +291,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  CateringRoute: CateringRoute,
   CustomerRoute: CustomerRouteWithChildren,
   DriverRoute: DriverRouteWithChildren,
   KitchenRoute: KitchenRouteWithChildren,
@@ -272,3 +299,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
