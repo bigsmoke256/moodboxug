@@ -110,7 +110,7 @@ function CheckoutPage() {
           order_id: order.id,
           menu_item_id: l.menuItemId,
           quantity: l.quantity,
-          selected_options: l.options as unknown as Record<string, unknown>[],
+          selected_options: JSON.parse(JSON.stringify(l.options)),
           line_total: (l.basePrice + optExtras) * l.quantity,
         };
       });
