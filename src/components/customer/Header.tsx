@@ -7,13 +7,13 @@ const NAV = [
   { label: "Home", to: "/customer" as const },
   { label: "Menu", href: "#menu" },
   { label: "Catering", to: "/catering" as const },
-  { label: "About Us", href: "#about" },
+  { label: "My Orders", to: "/customer/orders" as const },
   { label: "Contact", href: "#contact" },
 ];
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const { count } = useCart();
+  const { count, openCart } = useCart();
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -76,6 +76,7 @@ export function Header() {
             <User className="h-5 w-5" />
           </Link>
           <button
+            onClick={openCart}
             aria-label={`Cart (${count} items)`}
             className="relative grid h-10 w-10 place-items-center rounded-full text-charcoal transition-colors hover:bg-surface"
           >

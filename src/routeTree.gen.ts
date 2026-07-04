@@ -20,6 +20,9 @@ import { Route as KitchenIndexRouteImport } from './routes/kitchen.index'
 import { Route as DriverIndexRouteImport } from './routes/driver.index'
 import { Route as CustomerIndexRouteImport } from './routes/customer.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as CustomerCheckoutRouteImport } from './routes/customer.checkout'
+import { Route as CustomerOrdersIndexRouteImport } from './routes/customer.orders.index'
+import { Route as CustomerOrdersOrderIdRouteImport } from './routes/customer.orders.$orderId'
 
 const KitchenRoute = KitchenRouteImport.update({
   id: '/kitchen',
@@ -76,6 +79,21 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const CustomerCheckoutRoute = CustomerCheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => CustomerRoute,
+} as any)
+const CustomerOrdersIndexRoute = CustomerOrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => CustomerRoute,
+} as any)
+const CustomerOrdersOrderIdRoute = CustomerOrdersOrderIdRouteImport.update({
+  id: '/orders/$orderId',
+  path: '/orders/$orderId',
+  getParentRoute: () => CustomerRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -85,19 +103,25 @@ export interface FileRoutesByFullPath {
   '/customer': typeof CustomerRouteWithChildren
   '/driver': typeof DriverRouteWithChildren
   '/kitchen': typeof KitchenRouteWithChildren
+  '/customer/checkout': typeof CustomerCheckoutRoute
   '/admin/': typeof AdminIndexRoute
   '/customer/': typeof CustomerIndexRoute
   '/driver/': typeof DriverIndexRoute
   '/kitchen/': typeof KitchenIndexRoute
+  '/customer/orders/$orderId': typeof CustomerOrdersOrderIdRoute
+  '/customer/orders/': typeof CustomerOrdersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/catering': typeof CateringRoute
+  '/customer/checkout': typeof CustomerCheckoutRoute
   '/admin': typeof AdminIndexRoute
   '/customer': typeof CustomerIndexRoute
   '/driver': typeof DriverIndexRoute
   '/kitchen': typeof KitchenIndexRoute
+  '/customer/orders/$orderId': typeof CustomerOrdersOrderIdRoute
+  '/customer/orders': typeof CustomerOrdersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -108,10 +132,13 @@ export interface FileRoutesById {
   '/customer': typeof CustomerRouteWithChildren
   '/driver': typeof DriverRouteWithChildren
   '/kitchen': typeof KitchenRouteWithChildren
+  '/customer/checkout': typeof CustomerCheckoutRoute
   '/admin/': typeof AdminIndexRoute
   '/customer/': typeof CustomerIndexRoute
   '/driver/': typeof DriverIndexRoute
   '/kitchen/': typeof KitchenIndexRoute
+  '/customer/orders/$orderId': typeof CustomerOrdersOrderIdRoute
+  '/customer/orders/': typeof CustomerOrdersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -123,19 +150,25 @@ export interface FileRouteTypes {
     | '/customer'
     | '/driver'
     | '/kitchen'
+    | '/customer/checkout'
     | '/admin/'
     | '/customer/'
     | '/driver/'
     | '/kitchen/'
+    | '/customer/orders/$orderId'
+    | '/customer/orders/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/catering'
+    | '/customer/checkout'
     | '/admin'
     | '/customer'
     | '/driver'
     | '/kitchen'
+    | '/customer/orders/$orderId'
+    | '/customer/orders'
   id:
     | '__root__'
     | '/'
@@ -145,10 +178,13 @@ export interface FileRouteTypes {
     | '/customer'
     | '/driver'
     | '/kitchen'
+    | '/customer/checkout'
     | '/admin/'
     | '/customer/'
     | '/driver/'
     | '/kitchen/'
+    | '/customer/orders/$orderId'
+    | '/customer/orders/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -240,6 +276,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/customer/checkout': {
+      id: '/customer/checkout'
+      path: '/checkout'
+      fullPath: '/customer/checkout'
+      preLoaderRoute: typeof CustomerCheckoutRouteImport
+      parentRoute: typeof CustomerRoute
+    }
+    '/customer/orders/': {
+      id: '/customer/orders/'
+      path: '/orders'
+      fullPath: '/customer/orders/'
+      preLoaderRoute: typeof CustomerOrdersIndexRouteImport
+      parentRoute: typeof CustomerRoute
+    }
+    '/customer/orders/$orderId': {
+      id: '/customer/orders/$orderId'
+      path: '/orders/$orderId'
+      fullPath: '/customer/orders/$orderId'
+      preLoaderRoute: typeof CustomerOrdersOrderIdRouteImport
+      parentRoute: typeof CustomerRoute
+    }
   }
 }
 
@@ -254,11 +311,17 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface CustomerRouteChildren {
+  CustomerCheckoutRoute: typeof CustomerCheckoutRoute
   CustomerIndexRoute: typeof CustomerIndexRoute
+  CustomerOrdersOrderIdRoute: typeof CustomerOrdersOrderIdRoute
+  CustomerOrdersIndexRoute: typeof CustomerOrdersIndexRoute
 }
 
 const CustomerRouteChildren: CustomerRouteChildren = {
+  CustomerCheckoutRoute: CustomerCheckoutRoute,
   CustomerIndexRoute: CustomerIndexRoute,
+  CustomerOrdersOrderIdRoute: CustomerOrdersOrderIdRoute,
+  CustomerOrdersIndexRoute: CustomerOrdersIndexRoute,
 }
 
 const CustomerRouteWithChildren = CustomerRoute._addFileChildren(
@@ -299,13 +362,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
