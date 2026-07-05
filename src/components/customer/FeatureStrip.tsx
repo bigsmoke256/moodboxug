@@ -16,17 +16,19 @@ const FEATURES: Feature[] = [
 
 export function FeatureStrip() {
   return (
-    <section className="bg-background py-14">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-10 px-4 sm:px-6 md:grid-cols-4 lg:px-8">
+    <section className="border-b border-border/60 bg-background py-10">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 sm:grid-cols-2 sm:px-6 md:grid-cols-4 md:divide-x md:divide-border/60 lg:px-8">
         {FEATURES.map(({ Icon, title, desc, color }) => (
-          <div key={title} className="flex flex-col items-center text-center">
+          <div key={title} className="flex items-center gap-4 md:px-6">
             <Icon
-              className="h-10 w-10"
+              className="h-9 w-9 shrink-0"
               strokeWidth={1.5}
               style={{ color: color === "coral" ? "var(--coral)" : "var(--turquoise)" }}
             />
-            <h3 className="mt-4 text-h3 text-charcoal">{title}</h3>
-            <p className="mt-1 max-w-[16ch] text-body-sm text-muted-foreground">{desc}</p>
+            <div className="min-w-0">
+              <h3 className="text-body font-bold text-charcoal">{title}</h3>
+              <p className="mt-0.5 text-body-sm text-muted-foreground">{desc}</p>
+            </div>
           </div>
         ))}
       </div>

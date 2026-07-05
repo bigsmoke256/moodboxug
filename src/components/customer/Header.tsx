@@ -38,10 +38,10 @@ export function Header() {
           Moodbox
         </Link>
 
-        <nav className="hidden items-center justify-center gap-8 md:flex">
+        <nav className="hidden items-center justify-center gap-10 md:flex">
           {NAV.map((item) => {
             const isActive = "to" in item && item.to === pathname;
-            const className = `nav-underline text-sm font-medium transition-colors ${
+            const className = `nav-underline text-[13px] font-semibold uppercase tracking-[0.16em] transition-colors ${
               isActive ? "text-primary" : "text-charcoal hover:text-primary"
             }`;
             return "to" in item ? (

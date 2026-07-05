@@ -44,7 +44,7 @@ export function PopularPicks() {
           </div>
           <a
             href="#menu"
-            className="motion-button-elevate inline-flex items-center gap-2 rounded-[10px] border-2 border-secondary px-4 py-2 text-sm font-semibold text-secondary"
+            className="motion-button-elevate inline-flex items-center gap-2 rounded-[10px] border-2 border-secondary px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-secondary"
           >
             View Full Menu
             <ArrowRight className="h-4 w-4" />
