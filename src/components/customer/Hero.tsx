@@ -18,14 +18,14 @@ export function Hero() {
           <div className="mt-8 flex flex-wrap gap-3">
             <a
               href="#menu"
-              className="motion-button-elevate inline-flex items-center gap-2 rounded-[10px] bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-soft"
+              className="motion-button-elevate inline-flex items-center gap-2 rounded-[10px] bg-primary px-6 py-3 text-xs font-bold uppercase tracking-[0.14em] text-primary-foreground shadow-soft"
             >
               Order Now
               <ArrowRight className="h-4 w-4" />
             </a>
             <a
               href="#menu"
-              className="motion-button-elevate inline-flex items-center gap-2 rounded-[10px] border-2 border-secondary bg-transparent px-6 py-3 text-sm font-semibold text-secondary hover:bg-secondary/5"
+              className="motion-button-elevate inline-flex items-center gap-2 rounded-[10px] border-2 border-secondary bg-transparent px-6 py-3 text-xs font-bold uppercase tracking-[0.14em] text-secondary hover:bg-secondary/5"
             >
               Explore Menu
             </a>
