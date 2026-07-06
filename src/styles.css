@@ -200,6 +200,30 @@
   box-shadow: var(--shadow-soft-hover);
 }
 
+/* Glass surface — translucent light backing for header/modals/drawers over the app background. */
+@utility glass-surface {
+  background: color-mix(in oklab, var(--cream) 65%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Glass surface (dark variant) — for use over photography or the admin sidebar. */
+@utility glass-surface-dark {
+  background: color-mix(in oklab, var(--charcoal) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: var(--shadow-soft);
+  color: oklch(0.98 0 0);
+}
+
+/* Small glass pill — for overlay badges/promo chips over imagery. */
+@utility glass-pill {
+  background: color-mix(in oklab, white 55%, transparent);
+  backdrop-filter: blur(10px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
 /* Typography scale */
 @utility text-display-1 {
   font-family: var(--font-display);
