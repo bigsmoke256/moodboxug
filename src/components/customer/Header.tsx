@@ -25,8 +25,8 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-40 w-full bg-cream/95 backdrop-blur transition-shadow ${
-        scrolled ? "shadow-soft" : ""
+      className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+        scrolled ? "glass-surface" : "bg-cream/95 backdrop-blur"
       }`}
     >
       <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">

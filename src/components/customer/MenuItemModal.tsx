@@ -121,11 +121,11 @@ export function MenuItemModal({ item, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label={item.name}
-      className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4 animate-in fade-in"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl overflow-hidden rounded-[20px] bg-card shadow-soft animate-in zoom-in-95 duration-200"
+        className="glass-surface relative w-full max-w-2xl overflow-hidden rounded-[20px] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <button

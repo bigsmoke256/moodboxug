@@ -1,11 +1,12 @@
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { CreditCard, Smartphone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart, formatUGX } from "@/hooks/use-cart";
+import { placeOrder, type PlaceOrderResult } from "@/lib/orders.functions";
 
 export const Route = createFileRoute("/customer/checkout")({
   ssr: false,
@@ -16,16 +17,6 @@ export const Route = createFileRoute("/customer/checkout")({
     ],
   }),
   component: CheckoutPage,
-});
-
-const RESTAURANT_ID = "61548a61-12cb-4a04-ad26-d57264e9e436";
-
-const schema = z.object({
-  fullName: z.string().trim().min(2).max(100),
-  phone: z.string().trim().min(6).max(30),
-  email: z.string().trim().email().max(255).optional().or(z.literal("")),
-  address: z.string().trim().min(4).max(500),
-  notes: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
 type Method = "card" | "mtn_momo" | "airtel_money";
@@ -40,98 +31,98 @@ function CheckoutPage() {
   const cart = useCart();
   const auth = useAuth();
   const navigate = useNavigate();
+  const place = useServerFn(placeOrder);
+
   const [form, setForm] = useState({ fullName: "", phone: "", email: "", address: "", notes: "" });
   const [method, setMethod] = useState<Method>("card");
-  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [placed, setPlaced] = useState(false);
 
   useEffect(() => {
     if (auth.status === "signed-out") {
-      navigate({ to: "/auth" });
+      navigate({ to: "/auth", search: { redirect: "/customer/checkout" } });
     }
     if (auth.status === "signed-in") {
-      setForm((f) => ({
-        ...f,
-        email: f.email || auth.user?.email || "",
-      }));
+      setForm((f) => ({ ...f, email: f.email || auth.user?.email || "" }));
     }
   }, [auth.status, auth.user, navigate]);
 
   useEffect(() => {
-    if (cart.lines.length === 0 && !submitting) {
-      // Redirect back if cart empty
-      navigate({ to: "/customer" });
-    }
-  }, [cart.lines.length, navigate, submitting]);
+    if (cart.lines.length === 0 && !placed) navigate({ to: "/customer" });
+  }, [cart.lines.length, navigate, placed]);
 
-  const submit = async (e: React.FormEvent) => {
+  const mutation = useMutation<PlaceOrderResult>({
+    mutationFn: () =>
+      place({
+        data: {
+          lines: cart.lines.map((l) => ({
+            menuItemId: l.menuItemId,
+            quantity: l.quantity,
+            options: l.options.map((o) => ({ group: o.group, name: o.name })),
+          })),
+          promoCode: cart.promo?.code ?? null,
+          paymentMethod: method,
+          delivery: {
+            fullName: form.fullName.trim(),
+            phone: form.phone.trim(),
+            email: form.email.trim(),
+            address: form.address.trim(),
+            notes: form.notes.trim(),
+          },
+        },
+      }),
+    onSuccess: (result) => {
+      if (result.ok) {
+        setPlaced(true);
+        cart.clear();
+        toast.success("Order placed! Track it below.");
+        navigate({ to: "/customer/orders/$orderId", params: { orderId: result.orderId } });
+        return;
+      }
+      if (result.error === "unavailable") {
+        toast.error(
+          `No longer available: ${result.unavailableNames.join(", ")}. Please remove from cart.`,
+          { duration: 6000 },
+        );
+      } else if (result.error === "invalid_option") {
+        toast.error(`An option is no longer available: ${result.detail}. Please re-add the item.`);
+      }
+    },
+    onError: (err) => {
+      const isNetwork = err instanceof TypeError && /fetch/i.test(err.message);
+      toast.error(
+        isNetwork
+          ? "Connection issue — please retry."
+          : err instanceof Error
+            ? err.message
+            : "Could not place your order",
+      );
+    },
+  });
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (form.fullName.trim().length < 2) e.fullName = "Please enter your full name";
+    if (form.phone.trim().length < 6) e.phone = "Please enter a valid phone number";
+    if (form.email.trim() && !/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Invalid email";
+    if (form.address.trim().length < 4) e.address = "Delivery address is required";
+    if (form.notes.length > 500) e.notes = "Notes too long";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (auth.status !== "signed-in" || !auth.user) {
-      toast.error("Please sign in first");
-      navigate({ to: "/auth" });
+    if (auth.status !== "signed-in") {
+      navigate({ to: "/auth", search: { redirect: "/customer/checkout" } });
       return;
     }
-    const parsed = schema.safeParse(form);
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Please check your details");
+    if (!validate()) {
+      toast.error("Please check the highlighted fields");
       return;
     }
-    setSubmitting(true);
-    try {
-      const combinedInstructions = [
-        parsed.data.notes ? `Notes: ${parsed.data.notes}` : "",
-        `Contact: ${parsed.data.fullName} · ${parsed.data.phone}`,
-      ]
-        .filter(Boolean)
-        .join(" | ");
-
-      const { data: order, error: orderErr } = await supabase
-        .from("orders")
-        .insert({
-          customer_id: auth.user.id,
-          restaurant_id: RESTAURANT_ID,
-          status: "pending",
-          payment_status: "pending",
-          payment_method: method,
-          delivery_address: parsed.data.address,
-          special_instructions: combinedInstructions,
-          promo_code: cart.promo?.code ?? null,
-          subtotal: cart.subtotal,
-          delivery_fee: cart.deliveryFee,
-          tax: 0,
-          total: cart.total,
-        })
-        .select("id")
-        .single();
-      if (orderErr || !order) throw orderErr ?? new Error("Order failed");
-
-      const items = cart.lines.map((l) => {
-        const optExtras = l.options.reduce((s, o) => s + o.priceDelta, 0);
-        return {
-          order_id: order.id,
-          menu_item_id: l.menuItemId,
-          quantity: l.quantity,
-          selected_options: JSON.parse(JSON.stringify(l.options)),
-          line_total: (l.basePrice + optExtras) * l.quantity,
-        };
-      });
-      const { error: itemsErr } = await supabase.from("order_items").insert(items);
-      if (itemsErr) throw itemsErr;
-
-      const { error: histErr } = await supabase.from("order_status_history").insert({
-        order_id: order.id,
-        status: "pending",
-        changed_by: auth.user.id,
-      });
-      if (histErr) throw histErr;
-
-      cart.clear();
-      toast.success("Order placed! Track it below.");
-      navigate({ to: "/customer/orders/$orderId", params: { orderId: order.id } });
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : "Could not place your order");
-      setSubmitting(false);
-    }
+    if (mutation.isPending) return; // dedupe safety net
+    mutation.mutate();
   };
 
   if (auth.status === "loading") {
@@ -146,14 +137,33 @@ function CheckoutPage() {
       </h1>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
-        <form onSubmit={submit} className="space-y-6">
+        <form onSubmit={submit} className="space-y-6" noValidate>
           <section className="rounded-[20px] bg-card p-6 shadow-soft">
             <h2 className="text-h3 text-charcoal">Contact</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Field label="Full name" required value={form.fullName} onChange={(v) => setForm({ ...form, fullName: v })} />
-              <Field label="Phone" required type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
+              <Field
+                label="Full name"
+                required
+                value={form.fullName}
+                onChange={(v) => setForm({ ...form, fullName: v })}
+                error={errors.fullName}
+              />
+              <Field
+                label="Phone"
+                required
+                type="tel"
+                value={form.phone}
+                onChange={(v) => setForm({ ...form, phone: v })}
+                error={errors.phone}
+              />
               <div className="sm:col-span-2">
-                <Field label="Email (optional)" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
+                <Field
+                  label="Email (optional)"
+                  type="email"
+                  value={form.email}
+                  onChange={(v) => setForm({ ...form, email: v })}
+                  error={errors.email}
+                />
               </div>
             </div>
           </section>
@@ -167,6 +177,7 @@ function CheckoutPage() {
                 value={form.address}
                 onChange={(v) => setForm({ ...form, address: v })}
                 placeholder="Street, building, apartment"
+                error={errors.address}
               />
               <div>
                 <label className="text-body-sm font-medium text-charcoal">Notes / landmarks</label>
@@ -178,6 +189,7 @@ function CheckoutPage() {
                   className="mt-1 w-full rounded-[12px] border border-input bg-background px-3 py-2 text-body outline-none focus:ring-2 focus:ring-ring"
                   placeholder="Gate colour, floor, etc."
                 />
+                {errors.notes && <p className="mt-1 text-caption text-destructive">{errors.notes}</p>}
               </div>
             </div>
           </section>
@@ -212,11 +224,14 @@ function CheckoutPage() {
 
           <button
             type="submit"
-            disabled={submitting}
-            className="motion-button-elevate w-full rounded-[12px] bg-primary py-4 text-body font-semibold text-primary-foreground disabled:opacity-70"
+            disabled={mutation.isPending}
+            className="motion-button-elevate w-full rounded-[12px] bg-primary py-4 text-body font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {submitting ? "Placing order…" : `Place Order · ${formatUGX(cart.total)}`}
+            {mutation.isPending ? "Placing order…" : `Place Order · ${formatUGX(cart.total)}`}
           </button>
+          <p className="text-caption text-muted-foreground">
+            The final total is recomputed server-side from current prices — this display total is a preview.
+          </p>
         </form>
 
         <aside className="h-fit space-y-3 rounded-[20px] bg-card p-6 shadow-soft lg:sticky lg:top-24">
@@ -263,6 +278,7 @@ function Field({
   required,
   type = "text",
   placeholder,
+  error,
 }: {
   label: string;
   value: string;
@@ -270,6 +286,7 @@ function Field({
   required?: boolean;
   type?: string;
   placeholder?: string;
+  error?: string;
 }) {
   return (
     <div>
@@ -280,8 +297,12 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-[12px] border border-input bg-background px-3 py-2 text-body outline-none focus:ring-2 focus:ring-ring"
+        aria-invalid={!!error}
+        className={`mt-1 w-full rounded-[12px] border bg-background px-3 py-2 text-body outline-none focus:ring-2 focus:ring-ring ${
+          error ? "border-destructive" : "border-input"
+        }`}
       />
+      {error && <p className="mt-1 text-caption text-destructive">{error}</p>}
     </div>
   );
 }
