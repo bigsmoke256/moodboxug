@@ -52,8 +52,8 @@ export function CartDrawer() {
 
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Cart">
-      <div className="absolute inset-0 bg-black/40 animate-in fade-in" onClick={cart.closeCart} />
-      <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-cream shadow-2xl animate-in slide-in-from-right duration-200">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={cart.closeCart} />
+      <aside className="glass-surface absolute right-0 top-0 flex h-full w-full max-w-md flex-col shadow-2xl animate-in slide-in-from-right duration-200">
         <header className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 className="text-h3 text-charcoal">Your Cart ({cart.count})</h2>
           <button
