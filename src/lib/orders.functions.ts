@@ -79,7 +79,7 @@ export const placeOrder = createServerFn({ method: "POST" })
     const orderItems: Array<{
       menu_item_id: string;
       quantity: number;
-      selected_options: unknown;
+      selected_options: Array<{ group: string; name: string; priceDelta: number }>;
       line_total: number;
     }> = [];
     for (const line of data.lines) {
