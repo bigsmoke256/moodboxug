@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 
@@ -8,28 +8,31 @@ interface RoleGateProps {
 }
 
 /**
- * Client-only role gate. Redirects unauthenticated users to /auth and
- * users with the wrong role to /. Wrap every role-scoped layout with this.
+ * Client-only role gate. Redirects unauthenticated users to /auth with the
+ * current pathname preserved as `redirect` so they land back where they were
+ * after signing in. Users with the wrong role are bounced home.
  */
 export function RoleGate({ role, children }: RoleGateProps) {
   const auth = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (auth.status === "signed-out") {
-      navigate({ to: "/auth", search: { next: `/${role}` } as never });
+      navigate({
+        to: "/auth",
+        search: { redirect: location.pathname + (location.searchStr ?? "") },
+      });
       return;
     }
     if (auth.status === "signed-in" && !auth.roles.includes(role)) {
-      // If we know roles and they don't include the required one, bounce home.
-      // Roles load async — wait until at least one role is present OR the fetch settled.
-      // We infer "settled" by `signed-in` status + presence check on next tick.
+      // Roles load async — wait a tick before bouncing.
       const timer = setTimeout(() => {
         if (!auth.roles.includes(role)) navigate({ to: "/" });
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [auth.status, auth.roles, role, navigate]);
+  }, [auth.status, auth.roles, role, navigate, location.pathname, location.searchStr]);
 
   if (auth.status !== "signed-in" || !auth.roles.includes(role)) {
     return (

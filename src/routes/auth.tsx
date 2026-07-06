@@ -1,9 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+
+const searchSchema = z.object({
+  redirect: z.string().optional(),
+});
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  validateSearch: searchSchema,
   head: () => ({
     meta: [
       { title: "Sign in — Mood Box" },
@@ -14,7 +20,12 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+function isSafeRedirect(path: string | undefined): path is string {
+  return !!path && path.startsWith("/") && !path.startsWith("//");
+}
+
 function AuthPage() {
+  const search = Route.useSearch();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,12 +34,26 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // If already signed in, honor the redirect immediately.
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted || !data.session) return;
+      const target = isSafeRedirect(search.redirect) ? search.redirect : "/";
+      navigate({ to: target });
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [navigate, search.redirect]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
       if (mode === "signup") {
+        if (password.length < 8) throw new Error("Password must be at least 8 characters.");
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -42,7 +67,8 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      navigate({ to: "/" });
+      const target = isSafeRedirect(search.redirect) ? search.redirect : "/";
+      navigate({ to: target });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -70,6 +96,7 @@ function AuthPage() {
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                maxLength={100}
                 className="mt-1 w-full rounded-[var(--radius-input)] border border-input bg-background px-3 py-2 text-body outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -81,6 +108,7 @@ function AuthPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              maxLength={255}
               className="mt-1 w-full rounded-[var(--radius-input)] border border-input bg-background px-3 py-2 text-body outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -91,8 +119,12 @@ function AuthPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              minLength={mode === "signup" ? 8 : 1}
               className="mt-1 w-full rounded-[var(--radius-input)] border border-input bg-background px-3 py-2 text-body outline-none focus:ring-2 focus:ring-ring"
             />
+            {mode === "signup" && (
+              <p className="mt-1 text-caption text-muted-foreground">Minimum 8 characters.</p>
+            )}
           </div>
 
           {error && <p className="text-body-sm text-destructive">{error}</p>}
