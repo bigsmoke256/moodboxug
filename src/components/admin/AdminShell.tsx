@@ -1,11 +1,15 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import {
   BarChart3,
+  Bike,
   ChefHat,
   LayoutDashboard,
   Mail,
   Menu as MenuIcon,
+  MessageSquare,
+  Package,
   Percent,
+  Settings as SettingsIcon,
   ShoppingBag,
   Users,
   X,
@@ -17,10 +21,14 @@ const NAV = [
   { to: "/admin" as const, label: "Overview", icon: LayoutDashboard },
   { to: "/admin/orders" as const, label: "Orders", icon: ShoppingBag },
   { to: "/admin/menu" as const, label: "Menu", icon: ChefHat },
+  { to: "/admin/inventory" as const, label: "Inventory", icon: Package },
+  { to: "/admin/drivers" as const, label: "Drivers", icon: Bike },
   { to: "/admin/promotions" as const, label: "Promotions", icon: Percent },
   { to: "/admin/customers" as const, label: "Customers", icon: Users },
+  { to: "/admin/reviews" as const, label: "Reviews", icon: MessageSquare },
   { to: "/admin/subscribers" as const, label: "Subscribers", icon: Mail },
   { to: "/admin/analytics" as const, label: "Analytics", icon: BarChart3 },
+  { to: "/admin/settings" as const, label: "Settings", icon: SettingsIcon },
 ];
 
 export function AdminShell() {

@@ -1,10 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { acceptStaffInvite } from "@/lib/staff.functions";
 
 const searchSchema = z.object({
   redirect: z.string().optional(),
+  invite: z.string().optional(),
 });
 
 export const Route = createFileRoute("/auth")({
@@ -26,26 +30,56 @@ function isSafeRedirect(path: string | undefined): path is string {
 
 function AuthPage() {
   const search = Route.useSearch();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(search.invite ? "signup" : "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const accept = useServerFn(acceptStaffInvite);
 
-  // If already signed in, honor the redirect immediately.
+  const applyInviteIfAny = async (): Promise<string | null> => {
+    if (!search.invite) return null;
+    try {
+      const result = await accept({ data: { token: search.invite } });
+      if (result.ok) {
+        toast.success(`Welcome — you're set up as ${result.role}.`);
+        return result.role === "driver"
+          ? "/driver"
+          : result.role === "kitchen"
+            ? "/kitchen"
+            : result.role === "admin"
+              ? "/admin"
+              : null;
+      }
+      const messages: Record<string, string> = {
+        invalid: "Invite link is invalid.",
+        expired: "This invite has expired — ask an admin for a new one.",
+        already_accepted: "This invite has already been used.",
+        email_mismatch: "Please sign in with the email the invite was sent to.",
+      };
+      toast.error(messages[result.error] ?? "Could not accept invite");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not accept invite");
+    }
+    return null;
+  };
+
+  // If already signed in, honor the invite / redirect immediately.
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted || !data.session) return;
-      const target = isSafeRedirect(search.redirect) ? search.redirect : "/";
+      const inviteTarget = await applyInviteIfAny();
+      const target = inviteTarget ?? (isSafeRedirect(search.redirect) ? search.redirect : "/");
       navigate({ to: target });
     });
     return () => {
       mounted = false;
     };
-  }, [navigate, search.redirect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, search.redirect, search.invite]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +101,9 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      const target = isSafeRedirect(search.redirect) ? search.redirect : "/";
+      const inviteTarget = await applyInviteIfAny();
+      const target =
+        inviteTarget ?? (isSafeRedirect(search.redirect) ? search.redirect : "/");
       navigate({ to: target });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -87,6 +123,13 @@ function AuthPage() {
             ? "Create your account to start ordering."
             : "Sign in to continue."}
         </p>
+
+        {search.invite && (
+          <div className="mt-4 rounded-[12px] bg-primary/10 px-3 py-2 text-body-sm text-primary">
+            You've been invited to join as staff. Use the email the invite was sent to.
+          </div>
+        )}
+
 
         <form onSubmit={submit} className="mt-6 space-y-4">
           {mode === "signup" && (
