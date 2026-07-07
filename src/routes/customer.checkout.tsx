@@ -1,12 +1,15 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { CreditCard, Smartphone } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart, formatUGX } from "@/hooks/use-cart";
 import { placeOrder, type PlaceOrderResult } from "@/lib/orders.functions";
+
+const RESTAURANT_ID = "61548a61-12cb-4a04-ad26-d57264e9e436";
 
 export const Route = createFileRoute("/customer/checkout")({
   ssr: false,
@@ -32,6 +35,29 @@ function CheckoutPage() {
   const auth = useAuth();
   const navigate = useNavigate();
   const place = useServerFn(placeOrder);
+
+  const { data: pricing } = useQuery({
+    queryKey: ["restaurant-pricing"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("restaurants")
+        .select("settings")
+        .eq("id", RESTAURANT_ID)
+        .maybeSingle();
+      const s = (data?.settings ?? {}) as { delivery_fee?: number; tax_rate?: number };
+      return {
+        deliveryFee: Number(s.delivery_fee ?? 5000),
+        taxRate: Math.max(0, Math.min(100, Number(s.tax_rate ?? 0))),
+      };
+    },
+  });
+
+  const displayDeliveryFee = cart.lines.length > 0 ? pricing?.deliveryFee ?? cart.deliveryFee : 0;
+  const displayTax = useMemo(() => {
+    const rate = pricing?.taxRate ?? 0;
+    return Math.round(((cart.subtotal - cart.discount) * rate) / 100);
+  }, [cart.subtotal, cart.discount, pricing?.taxRate]);
+  const displayTotal = Math.max(0, cart.subtotal + displayDeliveryFee + displayTax - cart.discount);
 
   const [form, setForm] = useState({ fullName: "", phone: "", email: "", address: "", notes: "" });
   const [method, setMethod] = useState<Method>("card");
@@ -227,7 +253,7 @@ function CheckoutPage() {
             disabled={mutation.isPending}
             className="motion-button-elevate w-full rounded-[12px] bg-primary py-4 text-body font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {mutation.isPending ? "Placing order…" : `Place Order · ${formatUGX(cart.total)}`}
+            {mutation.isPending ? "Placing order…" : `Place Order · ${formatUGX(displayTotal)}`}
           </button>
           <p className="text-caption text-muted-foreground">
             The final total is recomputed server-side from current prices — this display total is a preview.
@@ -258,11 +284,12 @@ function CheckoutPage() {
           </ul>
           <dl className="mt-3 space-y-1 border-t border-border pt-3 text-body-sm">
             <Row label="Subtotal" value={formatUGX(cart.subtotal)} />
-            <Row label="Delivery" value={formatUGX(cart.deliveryFee)} />
+            <Row label="Delivery" value={formatUGX(displayDeliveryFee)} />
+            {displayTax > 0 && <Row label={`Tax (${pricing?.taxRate}%)`} value={formatUGX(displayTax)} />}
             {cart.discount > 0 && <Row label={`Discount (${cart.promo?.code})`} value={`-${formatUGX(cart.discount)}`} accent />}
             <div className="flex justify-between border-t border-border pt-2 text-body">
               <dt className="font-semibold text-charcoal">Total</dt>
-              <dd className="font-bold text-secondary">{formatUGX(cart.total)}</dd>
+              <dd className="font-bold text-secondary">{formatUGX(displayTotal)}</dd>
             </div>
           </dl>
         </aside>

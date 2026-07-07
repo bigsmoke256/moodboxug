@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const RESTAURANT_ID = "61548a61-12cb-4a04-ad26-d57264e9e436";
-const DELIVERY_FEE = 5000;
+const FALLBACK_DELIVERY_FEE = 5000;
 
 const OptionSchema = z.object({
   group: z.string().min(1).max(80),
@@ -105,9 +105,21 @@ export const placeOrder = createServerFn({ method: "POST" })
       });
     }
 
-    // 4. Re-validate promo server-side.
+    // 4. Read restaurant-level pricing (delivery fee + tax rate).
+    const { data: restaurant } = await supabase
+      .from("restaurants")
+      .select("settings")
+      .eq("id", RESTAURANT_ID)
+      .maybeSingle();
+    const rSettings = (restaurant?.settings ?? {}) as {
+      delivery_fee?: number;
+      tax_rate?: number;
+    };
+    let deliveryFee = Number(rSettings.delivery_fee ?? FALLBACK_DELIVERY_FEE);
+    const taxRate = Math.max(0, Math.min(100, Number(rSettings.tax_rate ?? 0)));
+
+    // 5. Re-validate promo server-side.
     let discount = 0;
-    let deliveryFee = DELIVERY_FEE;
     let appliedPromoCode: string | null = null;
     if (data.promoCode) {
       const nowIso = new Date().toISOString();
@@ -129,7 +141,8 @@ export const placeOrder = createServerFn({ method: "POST" })
       }
     }
 
-    const total = Math.max(0, subtotal + deliveryFee - discount);
+    const tax = Math.round(((subtotal - discount) * taxRate) / 100);
+    const total = Math.max(0, subtotal + deliveryFee + tax - discount);
     const combinedInstructions = [
       data.delivery.notes ? `Notes: ${data.delivery.notes}` : "",
       `Contact: ${data.delivery.fullName} · ${data.delivery.phone}`,
@@ -151,7 +164,7 @@ export const placeOrder = createServerFn({ method: "POST" })
         promo_code: appliedPromoCode,
         subtotal,
         delivery_fee: deliveryFee,
-        tax: 0,
+        tax,
         total,
       })
       .select("id")
