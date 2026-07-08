@@ -87,14 +87,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Mood Box — Good Food, Good Mood" },
       {
         property: "og:description",
-        content: "Delicious meals made with love and the freshest ingredients.",
+        content: "Delicious meals made with love and the freshest ingredients. Order, cater, and enjoy — that's the Mood Box way.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Mood Box — Good Food, Good Mood" },
+      { name: "twitter:description", content: "Delicious meals made with love and the freshest ingredients. Order, cater, and enjoy — that's the Mood Box way." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/496abf8b-8117-4364-97e3-bcb3f525c560/id-preview-797e271c--b6b96aac-5353-4dcf-b232-35ffa5fbe833.lovable.app-1783500018688.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/496abf8b-8117-4364-97e3-bcb3f525c560/id-preview-797e271c--b6b96aac-5353-4dcf-b232-35ffa5fbe833.lovable.app-1783500018688.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {
         rel: "preconnect",
