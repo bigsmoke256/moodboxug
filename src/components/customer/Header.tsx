@@ -2,12 +2,14 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { Search, ShoppingCart, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
+import { useAuth } from "@/hooks/use-auth";
 
 const NAV = [
   { label: "Home", to: "/customer" as const },
   { label: "Menu", href: "#menu" },
   { label: "Catering", to: "/catering" as const },
   { label: "My Orders", to: "/customer/orders" as const },
+  { label: "Account", to: "/customer/account" as const },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -15,6 +17,8 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const { count, openCart } = useCart();
   const { pathname } = useLocation();
+  const auth = useAuth();
+  const profileHref = auth.status === "signed-in" ? "/customer/account" : "/auth";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -69,8 +73,8 @@ export function Header() {
             <Search className="h-5 w-5" />
           </button>
           <Link
-            to="/auth"
-            aria-label="Profile"
+            to={profileHref}
+            aria-label={auth.status === "signed-in" ? "My account" : "Sign in"}
             className="grid h-10 w-10 place-items-center rounded-full text-charcoal transition-colors hover:bg-surface"
           >
             <User className="h-5 w-5" />
