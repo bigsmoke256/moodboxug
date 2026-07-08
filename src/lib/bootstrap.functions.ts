@@ -38,6 +38,16 @@ export const bootstrapAdmin = createServerFn({ method: "POST" }).handler(async (
     }
   }
 
+  // Always ensure the documented password + confirmed email are in effect.
+  try {
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: ADMIN_PASSWORD,
+      email_confirm: true,
+    });
+  } catch {
+    /* ignore */
+  }
+
   // 2. Ensure profile row exists.
   await supabaseAdmin
     .from("profiles")
