@@ -21,6 +21,7 @@ import { Route as DriverIndexRouteImport } from './routes/driver.index'
 import { Route as CustomerIndexRouteImport } from './routes/customer.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as CustomerCheckoutRouteImport } from './routes/customer.checkout'
+import { Route as CustomerAccountRouteImport } from './routes/customer.account'
 import { Route as AdminSubscribersRouteImport } from './routes/admin.subscribers'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminReviewsRouteImport } from './routes/admin.reviews'
@@ -92,6 +93,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const CustomerCheckoutRoute = CustomerCheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
+  getParentRoute: () => CustomerRoute,
+} as any)
+const CustomerAccountRoute = CustomerAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => CustomerRoute,
 } as any)
 const AdminSubscribersRoute = AdminSubscribersRouteImport.update({
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
+  '/customer/account': typeof CustomerAccountRoute
   '/customer/checkout': typeof CustomerCheckoutRoute
   '/admin/': typeof AdminIndexRoute
   '/customer/': typeof CustomerIndexRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
+  '/customer/account': typeof CustomerAccountRoute
   '/customer/checkout': typeof CustomerCheckoutRoute
   '/admin': typeof AdminIndexRoute
   '/customer': typeof CustomerIndexRoute
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscribers': typeof AdminSubscribersRoute
+  '/customer/account': typeof CustomerAccountRoute
   '/customer/checkout': typeof CustomerCheckoutRoute
   '/admin/': typeof AdminIndexRoute
   '/customer/': typeof CustomerIndexRoute
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/admin/reviews'
     | '/admin/settings'
     | '/admin/subscribers'
+    | '/customer/account'
     | '/customer/checkout'
     | '/admin/'
     | '/customer/'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/admin/reviews'
     | '/admin/settings'
     | '/admin/subscribers'
+    | '/customer/account'
     | '/customer/checkout'
     | '/admin'
     | '/customer'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/admin/reviews'
     | '/admin/settings'
     | '/admin/subscribers'
+    | '/customer/account'
     | '/customer/checkout'
     | '/admin/'
     | '/customer/'
@@ -401,6 +413,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout'
       fullPath: '/customer/checkout'
       preLoaderRoute: typeof CustomerCheckoutRouteImport
+      parentRoute: typeof CustomerRoute
+    }
+    '/customer/account': {
+      id: '/customer/account'
+      path: '/account'
+      fullPath: '/customer/account'
+      preLoaderRoute: typeof CustomerAccountRouteImport
       parentRoute: typeof CustomerRoute
     }
     '/admin/subscribers': {
@@ -521,6 +540,7 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface CustomerRouteChildren {
+  CustomerAccountRoute: typeof CustomerAccountRoute
   CustomerCheckoutRoute: typeof CustomerCheckoutRoute
   CustomerIndexRoute: typeof CustomerIndexRoute
   CustomerOrdersOrderIdRoute: typeof CustomerOrdersOrderIdRoute
@@ -528,6 +548,7 @@ interface CustomerRouteChildren {
 }
 
 const CustomerRouteChildren: CustomerRouteChildren = {
+  CustomerAccountRoute: CustomerAccountRoute,
   CustomerCheckoutRoute: CustomerCheckoutRoute,
   CustomerIndexRoute: CustomerIndexRoute,
   CustomerOrdersOrderIdRoute: CustomerOrdersOrderIdRoute,
@@ -572,3 +593,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
