@@ -39,6 +39,18 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const accept = useServerFn(acceptStaffInvite);
+  const bootstrap = useServerFn(bootstrapAdmin);
+
+  // One-time silent admin bootstrap on first visit to /auth.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.sessionStorage.getItem("moodbox_admin_bootstrapped") === "1") return;
+    bootstrap()
+      .then(() => window.sessionStorage.setItem("moodbox_admin_bootstrapped", "1"))
+      .catch(() => {
+        /* silent — user can still sign in normally */
+      });
+  }, [bootstrap]);
 
   const applyInviteIfAny = async (): Promise<string | null> => {
     if (!search.invite) return null;
