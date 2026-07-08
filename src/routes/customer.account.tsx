@@ -27,7 +27,12 @@ interface OrderWithItems {
   created_at: string;
   payment_method: string | null;
   payment_status: string;
-  order_items: { menu_item_id: string; name: string; quantity: number; unit_price: number }[];
+  order_items: {
+    menu_item_id: string;
+    quantity: number;
+    line_total: number;
+    menu_items: { name: string } | null;
+  }[];
 }
 
 interface Profile {
@@ -76,12 +81,12 @@ function AccountPage() {
       const { data, error } = await supabase
         .from("orders")
         .select(
-          "id, status, total, created_at, payment_method, payment_status, order_items(menu_item_id, name, quantity, unit_price)",
+          "id, status, total, created_at, payment_method, payment_status, order_items(menu_item_id, quantity, line_total, menu_items(name))",
         )
         .eq("customer_id", userId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as OrderWithItems[];
+      return (data ?? []) as unknown as OrderWithItems[];
     },
   });
 
@@ -98,10 +103,11 @@ function AccountPage() {
     for (const o of orders) {
       if (o.status === "cancelled") continue;
       for (const it of o.order_items ?? []) {
-        const cur = tally.get(it.menu_item_id) ?? { name: it.name, qty: 0, last: o.created_at };
+        const name = it.menu_items?.name ?? "Item";
+        const cur = tally.get(it.menu_item_id) ?? { name, qty: 0, last: o.created_at };
         cur.qty += it.quantity;
         if (o.created_at > cur.last) cur.last = o.created_at;
-        cur.name = it.name;
+        cur.name = name;
         tally.set(it.menu_item_id, cur);
       }
     }
