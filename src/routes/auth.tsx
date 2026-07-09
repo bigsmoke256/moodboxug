@@ -117,9 +117,12 @@ function AuthPage() {
         if (error) throw error;
       }
       const inviteTarget = await applyInviteIfAny();
+      const { data: sess } = await supabase.auth.getSession();
+      const roleTarget = sess.session ? await roleRedirect(sess.session.user.id) : "/";
       const target =
-        inviteTarget ?? (isSafeRedirect(search.redirect) ? search.redirect : "/");
+        inviteTarget ?? (isSafeRedirect(search.redirect) ? search.redirect : roleTarget);
       navigate({ to: target });
+
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
