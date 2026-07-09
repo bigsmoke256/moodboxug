@@ -13,7 +13,7 @@ import {
 import { formatUGX } from "@/hooks/use-cart";
 
 export const Route = createFileRoute("/admin/reports")({
-  component: AdminReports;
+  component: AdminReports,
 });
 
 const PERIODS: { id: ReportPeriod; label: string; description: string }[] = [
