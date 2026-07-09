@@ -3,6 +3,7 @@ import {
   BarChart3,
   Bike,
   ChefHat,
+  FileText,
   LayoutDashboard,
   Mail,
   Menu as MenuIcon,
@@ -28,6 +29,7 @@ const NAV = [
   { to: "/admin/reviews" as const, label: "Reviews", icon: MessageSquare },
   { to: "/admin/subscribers" as const, label: "Subscribers", icon: Mail },
   { to: "/admin/analytics" as const, label: "Analytics", icon: BarChart3 },
+  { to: "/admin/reports" as const, label: "Reports", icon: FileText },
   { to: "/admin/settings" as const, label: "Settings", icon: SettingsIcon },
 ];
 
