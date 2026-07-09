@@ -39,18 +39,16 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const accept = useServerFn(acceptStaffInvite);
-  const bootstrap = useServerFn(bootstrapAdmin);
 
-  // One-time silent admin bootstrap on first visit to /auth.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.sessionStorage.getItem("moodbox_admin_bootstrapped") === "1") return;
-    bootstrap()
-      .then(() => window.sessionStorage.setItem("moodbox_admin_bootstrapped", "1"))
-      .catch(() => {
-        /* silent — user can still sign in normally */
-      });
-  }, [bootstrap]);
+  const roleRedirect = async (userId: string): Promise<string> => {
+    const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const roles = (data ?? []).map((r) => r.role);
+    if (roles.includes("admin")) return "/admin";
+    if (roles.includes("kitchen")) return "/kitchen";
+    if (roles.includes("driver")) return "/driver";
+    return "/";
+  };
+
 
   const applyInviteIfAny = async (): Promise<string | null> => {
     if (!search.invite) return null;
