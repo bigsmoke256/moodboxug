@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook, Instagram, MapPin, Mail, Phone, MessageCircle } from "lucide-react";
+import { Facebook, Instagram, MapPin, Mail, Phone, MessageCircle, Lock } from "lucide-react";
+
 
 const QUICK = [
   { label: "Home", to: "/customer" as const },
