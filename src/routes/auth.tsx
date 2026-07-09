@@ -83,9 +83,13 @@ function AuthPage() {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted || !data.session) return;
       const inviteTarget = await applyInviteIfAny();
-      const target = inviteTarget ?? (isSafeRedirect(search.redirect) ? search.redirect : "/");
+      const roleTarget = await roleRedirect(data.session.user.id);
+      const target =
+        inviteTarget ??
+        (isSafeRedirect(search.redirect) ? search.redirect : roleTarget);
       navigate({ to: target });
     });
+
     return () => {
       mounted = false;
     };
