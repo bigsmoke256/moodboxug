@@ -5,12 +5,12 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { acceptStaffInvite } from "@/lib/staff.functions";
-import { bootstrapAdmin } from "@/lib/bootstrap.functions";
 
 const searchSchema = z.object({
   redirect: z.string().optional(),
   invite: z.string().optional(),
 });
+
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -39,18 +39,16 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const accept = useServerFn(acceptStaffInvite);
-  const bootstrap = useServerFn(bootstrapAdmin);
 
-  // One-time silent admin bootstrap on first visit to /auth.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.sessionStorage.getItem("moodbox_admin_bootstrapped") === "1") return;
-    bootstrap()
-      .then(() => window.sessionStorage.setItem("moodbox_admin_bootstrapped", "1"))
-      .catch(() => {
-        /* silent — user can still sign in normally */
-      });
-  }, [bootstrap]);
+  const roleRedirect = async (userId: string): Promise<string> => {
+    const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const roles = (data ?? []).map((r) => r.role);
+    if (roles.includes("admin")) return "/admin";
+    if (roles.includes("kitchen")) return "/kitchen";
+    if (roles.includes("driver")) return "/driver";
+    return "/";
+  };
+
 
   const applyInviteIfAny = async (): Promise<string | null> => {
     if (!search.invite) return null;
@@ -85,9 +83,13 @@ function AuthPage() {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted || !data.session) return;
       const inviteTarget = await applyInviteIfAny();
-      const target = inviteTarget ?? (isSafeRedirect(search.redirect) ? search.redirect : "/");
+      const roleTarget = await roleRedirect(data.session.user.id);
+      const target =
+        inviteTarget ??
+        (isSafeRedirect(search.redirect) ? search.redirect : roleTarget);
       navigate({ to: target });
     });
+
     return () => {
       mounted = false;
     };
@@ -115,9 +117,12 @@ function AuthPage() {
         if (error) throw error;
       }
       const inviteTarget = await applyInviteIfAny();
+      const { data: sess } = await supabase.auth.getSession();
+      const roleTarget = sess.session ? await roleRedirect(sess.session.user.id) : "/";
       const target =
-        inviteTarget ?? (isSafeRedirect(search.redirect) ? search.redirect : "/");
+        inviteTarget ?? (isSafeRedirect(search.redirect) ? search.redirect : roleTarget);
       navigate({ to: target });
+
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

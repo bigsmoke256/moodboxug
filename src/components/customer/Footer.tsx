@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook, Instagram, MapPin, Mail, Phone, MessageCircle } from "lucide-react";
+import { Facebook, Instagram, MapPin, Mail, Phone, MessageCircle, Lock } from "lucide-react";
+
 
 const QUICK = [
   { label: "Home", to: "/customer" as const },
@@ -35,7 +36,16 @@ export function Footer() {
                 <Icon className="h-4 w-4" strokeWidth={1.5} />
               </a>
             ))}
+            <Link
+              to="/auth"
+              className="grid h-9 w-9 place-items-center rounded-full border border-white/30 text-white/70 transition-colors hover:border-white/60 hover:text-white"
+              aria-label="Staff login"
+              title="Staff login"
+            >
+              <Lock className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </Link>
           </div>
+
         </div>
 
         <div>

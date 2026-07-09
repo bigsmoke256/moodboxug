@@ -81,11 +81,30 @@ function AdminMenu() {
 
   const remove = async (it: MenuItem) => {
     if (!confirm(`Delete ${it.name}? This cannot be undone.`)) return;
+    // Check for existing order history first.
+    const { count, error: countErr } = await supabase
+      .from("order_items")
+      .select("id", { count: "exact", head: true })
+      .eq("menu_item_id", it.id);
+    if (countErr) return toast.error(countErr.message);
+    if ((count ?? 0) > 0) {
+      const { error: archiveErr } = await supabase
+        .from("menu_items")
+        .update({ is_available: false })
+        .eq("id", it.id);
+      if (archiveErr) return toast.error(archiveErr.message);
+      toast.message(
+        "This item has past orders and can't be permanently deleted — it's been archived and hidden from the menu instead.",
+      );
+      qc.invalidateQueries({ queryKey: ["admin-menu-items"] });
+      return;
+    }
     const { error } = await supabase.from("menu_items").delete().eq("id", it.id);
     if (error) return toast.error(error.message);
     toast.success("Deleted");
     qc.invalidateQueries({ queryKey: ["admin-menu-items"] });
   };
+
 
   return (
     <div>
