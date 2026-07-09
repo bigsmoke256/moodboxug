@@ -5,12 +5,12 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { acceptStaffInvite } from "@/lib/staff.functions";
-import { bootstrapAdmin } from "@/lib/bootstrap.functions";
 
 const searchSchema = z.object({
   redirect: z.string().optional(),
   invite: z.string().optional(),
 });
+
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
