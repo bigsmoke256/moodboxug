@@ -33,6 +33,7 @@ export function useAuth(): AuthState {
     user: null,
     session: null,
     roles: [],
+    rolesLoaded: false,
   });
 
   useEffect(() => {
@@ -42,7 +43,13 @@ export function useAuth(): AuthState {
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       if (!session) {
-        setState({ status: "signed-out", user: null, session: null, roles: [] });
+        setState({
+          status: "signed-out",
+          user: null,
+          session: null,
+          roles: [],
+          rolesLoaded: true,
+        });
         return;
       }
       setState((prev) => ({
@@ -50,13 +57,15 @@ export function useAuth(): AuthState {
         status: "signed-in",
         user: session.user,
         session,
+        rolesLoaded: prev.user?.id === session.user.id ? prev.rolesLoaded : false,
+        roles: prev.user?.id === session.user.id ? prev.roles : [],
       }));
       // Defer role fetch so we don't block the listener.
       setTimeout(async () => {
         if (!mounted) return;
         const roles = await fetchRoles(session.user.id);
         if (!mounted) return;
-        setState((prev) => ({ ...prev, roles }));
+        setState((prev) => ({ ...prev, roles, rolesLoaded: true }));
       }, 0);
       void event;
     });
@@ -65,7 +74,13 @@ export function useAuth(): AuthState {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       if (!data.session) {
-        setState({ status: "signed-out", user: null, session: null, roles: [] });
+        setState({
+          status: "signed-out",
+          user: null,
+          session: null,
+          roles: [],
+          rolesLoaded: true,
+        });
         return;
       }
       const roles = await fetchRoles(data.session.user.id);
@@ -75,6 +90,7 @@ export function useAuth(): AuthState {
         user: data.session.user,
         session: data.session,
         roles,
+        rolesLoaded: true,
       });
     })();
 
