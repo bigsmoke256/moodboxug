@@ -25,16 +25,22 @@ export function RoleGate({ role, children }: RoleGateProps) {
       });
       return;
     }
-    if (auth.status === "signed-in" && !auth.roles.includes(role)) {
-      // Roles load async — wait a tick before bouncing.
-      const timer = setTimeout(() => {
-        if (!auth.roles.includes(role)) navigate({ to: "/" });
-      }, 300);
-      return () => clearTimeout(timer);
+    // Only bounce once roles are definitively known — otherwise a slow role
+    // fetch looks like "wrong role" and kicks the user back to the homepage.
+    if (auth.status === "signed-in" && auth.rolesLoaded && !auth.roles.includes(role)) {
+      navigate({ to: "/" });
     }
-  }, [auth.status, auth.roles, role, navigate, location.pathname, location.searchStr]);
+  }, [
+    auth.status,
+    auth.roles,
+    auth.rolesLoaded,
+    role,
+    navigate,
+    location.pathname,
+    location.searchStr,
+  ]);
 
-  if (auth.status !== "signed-in" || !auth.roles.includes(role)) {
+  if (auth.status !== "signed-in" || !auth.rolesLoaded || !auth.roles.includes(role)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <p className="text-body-sm text-muted-foreground">Loading…</p>
