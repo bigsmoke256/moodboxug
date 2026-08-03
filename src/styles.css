@@ -297,3 +297,20 @@
     font-family: var(--font-display);
   }
 }
+
+/* Delivery receipt printing: only the receipt sheet goes to paper. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt,
+  #receipt * {
+    visibility: visible;
+  }
+  #receipt {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    padding: 12px;
+  }
+}
