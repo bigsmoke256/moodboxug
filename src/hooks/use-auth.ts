@@ -9,6 +9,8 @@ export interface AuthState {
   user: User | null;
   session: Session | null;
   roles: AppRole[];
+  /** True once roles have actually been fetched for the current user. */
+  rolesLoaded: boolean;
 }
 
 async function fetchRoles(userId: string): Promise<AppRole[]> {
