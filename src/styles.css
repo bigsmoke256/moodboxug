@@ -216,10 +216,11 @@
 
 /* Glass surface — translucent light backing for header/modals/drawers over the app background. */
 @utility glass-surface {
-  background: color-mix(in oklab, var(--cream) 65%, transparent);
+  background: color-mix(in oklab, var(--cream) 72%, transparent);
   backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
   box-shadow: var(--shadow-soft);
+  color: var(--foreground);
 }
 
 /* Glass surface (dark variant) — for use over photography or the admin sidebar. */
@@ -234,10 +235,12 @@
 
 /* Small glass pill — for overlay badges/promo chips over imagery. */
 @utility glass-pill {
-  background: color-mix(in oklab, white 55%, transparent);
+  background: color-mix(in oklab, var(--card) 60%, transparent);
   backdrop-filter: blur(10px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid color-mix(in oklab, var(--foreground) 15%, transparent);
+  color: var(--foreground);
 }
+
 
 /* Typography scale */
 @utility text-display-1 {
