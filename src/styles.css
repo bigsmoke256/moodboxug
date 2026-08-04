@@ -63,6 +63,11 @@
   --color-cream: var(--cream);
   --color-surface: var(--surface);
   --color-charcoal: var(--charcoal);
+  /* Fixed tokens — never flip with the theme. Use only on always-light
+     surfaces (printed receipts) or always-coloured bands. */
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -81,6 +86,9 @@
   --cream:     oklch(0.992 0.006 85);   /* #FFFCF8 */
   --surface:   oklch(0.961 0 0);        /* #F5F5F5 */
   --charcoal:  oklch(0.20 0 0);         /* #1A1A1A */
+  --ink:       oklch(0.20 0 0);         /* always dark — printed/coloured surfaces */
+  --paper:     oklch(1 0 0);            /* always white — printed/coloured surfaces */
+
 
   /* Semantic (light theme = Mood Box default) */
   --background: var(--cream);
@@ -114,8 +122,14 @@
 }
 
 .dark {
+  /* Brand neutrals flip so text-charcoal / bg-cream / bg-surface stay legible. */
+  --cream:    oklch(0.16 0 0);
+  --surface:  oklch(0.26 0 0);
+  --charcoal: oklch(0.98 0 0);
+
   --background: oklch(0.16 0 0);
   --foreground: oklch(0.98 0 0);
+
   --card: oklch(0.22 0 0);
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.22 0 0);
@@ -202,27 +216,31 @@
 
 /* Glass surface — translucent light backing for header/modals/drawers over the app background. */
 @utility glass-surface {
-  background: color-mix(in oklab, var(--cream) 65%, transparent);
+  background: color-mix(in oklab, var(--cream) 72%, transparent);
   backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
   box-shadow: var(--shadow-soft);
+  color: var(--foreground);
 }
 
 /* Glass surface (dark variant) — for use over photography or the admin sidebar. */
 @utility glass-surface-dark {
-  background: color-mix(in oklab, var(--charcoal) 72%, transparent);
+  background: color-mix(in oklab, var(--ink) 78%, transparent);
   backdrop-filter: blur(14px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.10);
   box-shadow: var(--shadow-soft);
   color: oklch(0.98 0 0);
 }
 
+
 /* Small glass pill — for overlay badges/promo chips over imagery. */
 @utility glass-pill {
-  background: color-mix(in oklab, white 55%, transparent);
+  background: color-mix(in oklab, var(--card) 60%, transparent);
   backdrop-filter: blur(10px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid color-mix(in oklab, var(--foreground) 15%, transparent);
+  color: var(--foreground);
 }
+
 
 /* Typography scale */
 @utility text-display-1 {
