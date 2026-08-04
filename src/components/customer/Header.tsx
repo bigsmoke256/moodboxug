@@ -3,6 +3,8 @@ import { Search, ShoppingCart, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
+
 
 const NAV = [
   { label: "Home", to: "/customer" as const },
