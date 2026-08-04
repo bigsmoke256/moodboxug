@@ -133,7 +133,7 @@ function AdminOrders() {
               <div key={col.key} className="rounded-[16px] bg-surface p-3">
                 <div className="mb-3 flex items-center justify-between px-1">
                   <h2 className="text-body-sm font-bold uppercase tracking-wider text-charcoal">{col.label}</h2>
-                  <span className="rounded-full bg-white px-2 py-0.5 text-caption text-muted-foreground">{items.length}</span>
+                  <span className="rounded-full bg-card px-2 py-0.5 text-caption text-muted-foreground">{items.length}</span>
                 </div>
                 <div className="space-y-2">
                   {items.map((o) => (

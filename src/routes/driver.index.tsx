@@ -274,7 +274,7 @@ function DriverApp() {
 function ReceiptModal({ delivery, onClose }: { delivery: Delivery; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 print:static print:bg-transparent print:p-0">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl print:max-w-none print:shadow-none">
+      <div className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-xl print:bg-paper print:text-ink print:max-w-none print:shadow-none">
         <div className="flex items-start justify-between print:hidden">
           <h2 className="text-body font-bold text-charcoal">Delivery receipt</h2>
           <button onClick={onClose} aria-label="Close receipt">

@@ -55,13 +55,13 @@ export function Newsletter() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="min-w-0 flex-1 rounded-[12px] bg-white px-4 py-3 text-sm text-charcoal outline-none ring-2 ring-transparent focus:ring-white/60"
+              className="min-w-0 flex-1 rounded-[12px] bg-paper px-4 py-3 text-sm text-ink outline-none ring-2 ring-transparent focus:ring-white/60"
               maxLength={255}
             />
             <button
               type="submit"
               disabled={status === "loading"}
-              className="motion-button-elevate shrink-0 rounded-[12px] bg-white px-5 py-3 text-sm font-semibold text-primary disabled:opacity-70"
+              className="motion-button-elevate shrink-0 rounded-[12px] bg-paper px-5 py-3 text-sm font-semibold text-primary disabled:opacity-70"
             >
               {status === "loading" ? "…" : "Subscribe"}
             </button>
