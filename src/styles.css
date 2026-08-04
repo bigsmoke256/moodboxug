@@ -63,6 +63,11 @@
   --color-cream: var(--cream);
   --color-surface: var(--surface);
   --color-charcoal: var(--charcoal);
+  /* Fixed tokens — never flip with the theme. Use only on always-light
+     surfaces (printed receipts) or always-coloured bands. */
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
