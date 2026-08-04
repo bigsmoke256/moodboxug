@@ -3,6 +3,8 @@ import { Search, ShoppingCart, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
+
 
 const NAV = [
   { label: "Home", to: "/customer" as const },
@@ -66,12 +68,14 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2 justify-self-end">
+          <ThemeToggle />
           <button
             aria-label="Search"
             className="grid h-10 w-10 place-items-center rounded-full text-charcoal transition-colors hover:bg-surface"
           >
             <Search className="h-5 w-5" />
           </button>
+
           <Link
             to={profileHref}
             aria-label={auth.status === "signed-in" ? "My account" : "Sign in"}
