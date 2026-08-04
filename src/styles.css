@@ -224,12 +224,13 @@
 
 /* Glass surface (dark variant) — for use over photography or the admin sidebar. */
 @utility glass-surface-dark {
-  background: color-mix(in oklab, var(--charcoal) 72%, transparent);
+  background: color-mix(in oklab, var(--ink) 78%, transparent);
   backdrop-filter: blur(14px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.10);
   box-shadow: var(--shadow-soft);
   color: oklch(0.98 0 0);
 }
+
 
 /* Small glass pill — for overlay badges/promo chips over imagery. */
 @utility glass-pill {
