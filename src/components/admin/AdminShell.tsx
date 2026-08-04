@@ -85,12 +85,16 @@ export function AdminShell() {
           })}
         </nav>
 
-        <button
-          onClick={signOut}
-          className="rounded-[12px] border border-white/20 py-2 text-body-sm text-white/80 hover:bg-white/10"
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={signOut}
+            className="flex-1 rounded-[12px] border border-white/20 py-2 text-body-sm text-white/80 hover:bg-white/10"
+          >
+            Sign out
+          </button>
+          <ThemeToggle onDark />
+        </div>
+
       </aside>
 
       {/* Backdrop for mobile */}
