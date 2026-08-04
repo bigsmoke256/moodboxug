@@ -122,8 +122,14 @@
 }
 
 .dark {
+  /* Brand neutrals flip so text-charcoal / bg-cream / bg-surface stay legible. */
+  --cream:    oklch(0.16 0 0);
+  --surface:  oklch(0.26 0 0);
+  --charcoal: oklch(0.98 0 0);
+
   --background: oklch(0.16 0 0);
   --foreground: oklch(0.98 0 0);
+
   --card: oklch(0.22 0 0);
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.22 0 0);
