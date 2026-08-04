@@ -86,6 +86,9 @@
   --cream:     oklch(0.992 0.006 85);   /* #FFFCF8 */
   --surface:   oklch(0.961 0 0);        /* #F5F5F5 */
   --charcoal:  oklch(0.20 0 0);         /* #1A1A1A */
+  --ink:       oklch(0.20 0 0);         /* always dark — printed/coloured surfaces */
+  --paper:     oklch(1 0 0);            /* always white — printed/coloured surfaces */
+
 
   /* Semantic (light theme = Mood Box default) */
   --background: var(--cream);
