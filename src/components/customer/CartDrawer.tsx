@@ -4,8 +4,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart, formatUGX, type AppliedPromo } from "@/hooks/use-cart";
+import { FulfillmentToggle } from "@/components/customer/FulfillmentToggle";
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&q=80";
+
 
 export function CartDrawer() {
   const cart = useCart();
@@ -53,7 +55,8 @@ export function CartDrawer() {
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Cart">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={cart.closeCart} />
-      <aside className="glass-surface absolute right-0 top-0 flex h-full w-full max-w-md flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+      <aside className="glass-surface absolute inset-x-0 bottom-0 flex max-h-[88vh] w-full flex-col rounded-t-[24px] shadow-2xl animate-in slide-in-from-bottom duration-200 sm:inset-x-auto sm:top-0 sm:right-0 sm:max-h-none sm:h-full sm:max-w-md sm:rounded-t-none sm:slide-in-from-right">
+        <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-border sm:hidden" />
         <header className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 className="text-h3 text-charcoal">Your Cart ({cart.count})</h2>
           <button
@@ -64,6 +67,16 @@ export function CartDrawer() {
             <X className="h-5 w-5" />
           </button>
         </header>
+
+        <div className="border-b border-border px-5 py-3">
+          <FulfillmentToggle value={cart.fulfillment} onChange={cart.setFulfillment} />
+          <p className="mt-2 text-caption text-muted-foreground">
+            {cart.fulfillment === "pickup"
+              ? "Collect at Mood Box — no delivery fee."
+              : "We'll bring it to your door."}
+          </p>
+        </div>
+
 
         {cart.lines.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">

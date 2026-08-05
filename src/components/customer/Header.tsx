@@ -1,10 +1,10 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Search, ShoppingCart, User } from "lucide-react";
+import { Menu, Search, ShoppingCart, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
-
+import { MobileNav } from "@/components/customer/MobileNav";
 
 const NAV = [
   { label: "Home", to: "/customer" as const },
@@ -17,6 +17,7 @@ const NAV = [
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const { count, openCart } = useCart();
   const { pathname } = useLocation();
   const auth = useAuth();
@@ -29,6 +30,14 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const focusSearch = () => {
+    const el = document.querySelector<HTMLInputElement>('input[aria-label="Search the menu"]');
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => el.focus(), 350);
+    }
+  };
+
   return (
     <header
       className={`sticky top-0 z-40 w-full transition-all duration-300 ${
@@ -36,13 +45,22 @@ export function Header() {
       }`}
     >
       <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <Link
-          to="/customer"
-          className="text-2xl font-bold text-secondary"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          Moodbox
-        </Link>
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            aria-label="Open menu"
+            onClick={() => setNavOpen(true)}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-charcoal transition-colors hover:bg-surface md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <Link
+            to="/customer"
+            className="truncate text-2xl font-bold text-secondary"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Moodbox
+          </Link>
+        </div>
 
         <nav className="hidden items-center justify-center gap-10 md:flex">
           {NAV.map((item) => {
@@ -71,6 +89,7 @@ export function Header() {
           <ThemeToggle />
           <button
             aria-label="Search"
+            onClick={focusSearch}
             className="grid h-10 w-10 place-items-center rounded-full text-charcoal transition-colors hover:bg-surface"
           >
             <Search className="h-5 w-5" />
@@ -99,6 +118,8 @@ export function Header() {
           </button>
         </div>
       </div>
+
+      <MobileNav open={navOpen} onClose={() => setNavOpen(false)} />
     </header>
   );
 }

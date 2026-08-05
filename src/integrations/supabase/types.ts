@@ -356,6 +356,7 @@ export type Database = {
           delivery_lat: number | null
           delivery_lng: number | null
           driver_id: string | null
+          estimated_delivery_at: string | null
           id: string
           payment_method: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
@@ -376,6 +377,7 @@ export type Database = {
           delivery_lat?: number | null
           delivery_lng?: number | null
           driver_id?: string | null
+          estimated_delivery_at?: string | null
           id?: string
           payment_method?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
@@ -396,6 +398,7 @@ export type Database = {
           delivery_lat?: number | null
           delivery_lng?: number | null
           driver_id?: string | null
+          estimated_delivery_at?: string | null
           id?: string
           payment_method?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
@@ -436,24 +439,30 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          deactivated_at: string | null
           full_name: string | null
           id: string
+          is_deactivated: boolean
           is_vip: boolean
           phone: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          deactivated_at?: string | null
           full_name?: string | null
           id: string
+          is_deactivated?: boolean
           is_vip?: boolean
           phone?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          deactivated_at?: string | null
           full_name?: string | null
           id?: string
+          is_deactivated?: boolean
           is_vip?: boolean
           phone?: string | null
         }
@@ -611,6 +620,41 @@ export type Database = {
           {
             foreignKeyName: "staff_invites_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          is_read: boolean
+          message: string
+          sender: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          is_read?: boolean
+          message: string
+          sender: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          sender?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_customer_id_fkey"
+            columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

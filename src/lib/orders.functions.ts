@@ -20,14 +20,18 @@ const InputSchema = z.object({
   lines: z.array(LineSchema).min(1).max(50),
   promoCode: z.string().trim().min(1).max(50).nullable().optional(),
   paymentMethod: z.enum(["card", "mtn_momo", "airtel_money"]),
+  fulfillment: z.enum(["delivery", "pickup"]).default("delivery"),
   delivery: z.object({
     fullName: z.string().trim().min(2).max(100),
     phone: z.string().trim().min(6).max(30),
     email: z.string().trim().email().max(255).optional().or(z.literal("")),
-    address: z.string().trim().min(4).max(500),
+    address: z.string().trim().max(500).default(""),
     notes: z.string().trim().max(500).optional().or(z.literal("")),
+    lat: z.number().min(-90).max(90).nullable().optional(),
+    lng: z.number().min(-180).max(180).nullable().optional(),
   }),
 });
+
 
 export type PlaceOrderResult =
   | { ok: true; orderId: string; total: number }
@@ -105,6 +109,11 @@ export const placeOrder = createServerFn({ method: "POST" })
       });
     }
 
+    const isPickup = data.fulfillment === "pickup";
+    if (!isPickup && data.delivery.address.trim().length < 4) {
+      throw new Error("A delivery address is required");
+    }
+
     // 4. Read restaurant-level pricing (delivery fee + tax rate).
     const { data: restaurant } = await supabase
       .from("restaurants")
@@ -115,8 +124,9 @@ export const placeOrder = createServerFn({ method: "POST" })
       delivery_fee?: number;
       tax_rate?: number;
     };
-    let deliveryFee = Number(rSettings.delivery_fee ?? FALLBACK_DELIVERY_FEE);
+    let deliveryFee = isPickup ? 0 : Number(rSettings.delivery_fee ?? FALLBACK_DELIVERY_FEE);
     const taxRate = Math.max(0, Math.min(100, Number(rSettings.tax_rate ?? 0)));
+
 
     // 5. Re-validate promo server-side.
     let discount = 0;
@@ -144,6 +154,7 @@ export const placeOrder = createServerFn({ method: "POST" })
     const tax = Math.round(((subtotal - discount) * taxRate) / 100);
     const total = Math.max(0, subtotal + deliveryFee + tax - discount);
     const combinedInstructions = [
+      isPickup ? "PICKUP order — customer collects at the restaurant." : "",
       data.delivery.notes ? `Notes: ${data.delivery.notes}` : "",
       `Contact: ${data.delivery.fullName} · ${data.delivery.phone}`,
     ]
@@ -159,7 +170,10 @@ export const placeOrder = createServerFn({ method: "POST" })
         status: "pending",
         payment_status: "pending",
         payment_method: data.paymentMethod,
-        delivery_address: data.delivery.address,
+        delivery_address: isPickup ? "Pickup at Mood Box" : data.delivery.address,
+        delivery_lat: isPickup ? null : (data.delivery.lat ?? null),
+        delivery_lng: isPickup ? null : (data.delivery.lng ?? null),
+        estimated_delivery_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
         special_instructions: combinedInstructions,
         promo_code: appliedPromoCode,
         subtotal,
@@ -169,6 +183,7 @@ export const placeOrder = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
+
     if (oErr || !order) throw new Error(oErr?.message ?? "Could not place order");
 
     const { error: iErr } = await supabase

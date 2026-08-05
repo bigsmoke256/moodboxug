@@ -30,6 +30,8 @@ export interface AppliedPromo {
   value: number;
 }
 
+export type Fulfillment = "delivery" | "pickup";
+
 interface CartState {
   lines: CartLine[];
   count: number;
@@ -38,6 +40,8 @@ interface CartState {
   discount: number;
   total: number;
   promo: AppliedPromo | null;
+  fulfillment: Fulfillment;
+  setFulfillment: (f: Fulfillment) => void;
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -68,6 +72,7 @@ function makeKey(menuItemId: string, options: SelectedOption[]) {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [promo, setPromo] = useState<AppliedPromo | null>(null);
+  const [fulfillment, setFulfillment] = useState<Fulfillment>("delivery");
   const [isOpen, setIsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
@@ -76,9 +81,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as { lines?: CartLine[]; promo?: AppliedPromo | null };
+        const parsed = JSON.parse(raw) as {
+          lines?: CartLine[];
+          promo?: AppliedPromo | null;
+          fulfillment?: Fulfillment;
+        };
         if (parsed.lines) setLines(parsed.lines);
         if (parsed.promo) setPromo(parsed.promo);
+        if (parsed.fulfillment === "pickup" || parsed.fulfillment === "delivery") {
+          setFulfillment(parsed.fulfillment);
+        }
       }
     } catch {
       /* noop */
@@ -88,8 +100,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ lines, promo }));
-  }, [lines, promo, hydrated]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ lines, promo, fulfillment }));
+  }, [lines, promo, fulfillment, hydrated]);
 
   const add = useCallback(
     (input: Omit<CartLine, "key" | "quantity">, qty = 1) => {
@@ -123,7 +135,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const derived = useMemo(() => {
     const count = lines.reduce((n, l) => n + l.quantity, 0);
     const subtotal = lines.reduce((s, l) => s + lineTotal(l), 0);
-    let deliveryFee = lines.length > 0 ? DEFAULT_DELIVERY_FEE : 0;
+    let deliveryFee = lines.length > 0 && fulfillment === "delivery" ? DEFAULT_DELIVERY_FEE : 0;
     let discount = 0;
     if (promo) {
       if (promo.type === "percentage") discount = Math.round((subtotal * promo.value) / 100);
@@ -132,13 +144,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
     const total = Math.max(0, subtotal + deliveryFee - discount);
     return { count, subtotal, deliveryFee, discount, total };
-  }, [lines, promo]);
+  }, [lines, promo, fulfillment]);
 
   const value = useMemo<CartState>(
     () => ({
       lines,
       ...derived,
       promo,
+      fulfillment,
+      setFulfillment,
       isOpen,
       openCart,
       closeCart,
@@ -148,7 +162,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       clear,
       applyPromo,
     }),
-    [lines, derived, promo, isOpen, openCart, closeCart, add, setQty, remove, clear, applyPromo],
+    [lines, derived, promo, fulfillment, isOpen, openCart, closeCart, add, setQty, remove, clear, applyPromo],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

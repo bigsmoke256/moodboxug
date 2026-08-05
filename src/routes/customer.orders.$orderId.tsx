@@ -25,6 +25,17 @@ const STAGES = [
   { key: "delivered", label: "Delivered" },
 ] as const;
 
+const STATUS_PILL: Record<string, { label: string; className: string }> = {
+  pending: { label: "Order received", className: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
+  confirmed: { label: "Confirmed", className: "bg-secondary/15 text-secondary" },
+  preparing: { label: "In the kitchen", className: "bg-secondary/15 text-secondary" },
+  ready: { label: "Ready", className: "bg-secondary/20 text-secondary" },
+  assigned: { label: "Driver assigned", className: "bg-primary/15 text-primary" },
+  out_for_delivery: { label: "Out for delivery", className: "bg-primary/20 text-primary" },
+  delivered: { label: "Delivered", className: "bg-secondary/20 text-secondary" },
+  cancelled: { label: "Cancelled", className: "bg-destructive/10 text-destructive" },
+};
+
 interface OrderDetail {
   id: string;
   status: string;
@@ -32,6 +43,7 @@ interface OrderDetail {
   payment_status: string;
   delivery_address: string | null;
   special_instructions: string | null;
+  estimated_delivery_at: string | null;
   subtotal: number;
   delivery_fee: number;
   total: number;
@@ -45,6 +57,7 @@ interface OrderDetail {
   }[];
 }
 
+
 function OrderTracking() {
   const { orderId } = Route.useParams();
   const auth = useAuth();
@@ -57,7 +70,7 @@ function OrderTracking() {
       const { data, error } = await supabase
         .from("orders")
         .select(
-          "id, status, payment_method, payment_status, delivery_address, special_instructions, subtotal, delivery_fee, total, created_at, order_items:order_items(id, quantity, line_total, selected_options, menu_items:menu_items(name, image_url))",
+          "id, status, payment_method, payment_status, delivery_address, special_instructions, estimated_delivery_at, subtotal, delivery_fee, total, created_at, order_items:order_items(id, quantity, line_total, selected_options, menu_items:menu_items(name, image_url))",
         )
         .eq("id", orderId)
         .maybeSingle();
@@ -105,13 +118,30 @@ function OrderTracking() {
       <Link to="/customer/orders" className="text-body-sm text-primary hover:underline">
         ← My orders
       </Link>
-      <p className="mt-4 text-eyebrow">Order #{order.id.slice(0, 8)}</p>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <p className="text-eyebrow">Order #{order.id.slice(0, 8)}</p>
+        <span
+          className={`rounded-full px-3 py-1 text-caption font-semibold ${
+            STATUS_PILL[order.status]?.className ?? "bg-surface text-charcoal"
+          }`}
+        >
+          {STATUS_PILL[order.status]?.label ?? order.status}
+        </span>
+      </div>
       <h1 className="mt-1 text-display-2 text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
         {isCancelled ? "Order cancelled" : "Tracking your order"}
       </h1>
       <p className="mt-1 text-body-sm text-muted-foreground">
         Placed {new Date(order.created_at).toLocaleString()}
       </p>
+
+      {!isCancelled && order.status !== "delivered" && (
+        <ArrivalCard
+          etaIso={order.estimated_delivery_at ?? new Date(new Date(order.created_at).getTime() + 30 * 60 * 1000).toISOString()}
+          outForDelivery={order.status === "out_for_delivery" || order.status === "assigned"}
+        />
+      )}
+
 
       {/* Timeline */}
       {isCancelled ? (
@@ -261,5 +291,38 @@ function ReviewCard({ orderId, customerId }: { orderId: string; customerId: stri
         Submit review
       </button>
     </section>
+  );
+}
+
+function ArrivalCard({ etaIso, outForDelivery }: { etaIso: string; outForDelivery: boolean }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const msLeft = new Date(etaIso).getTime() - now;
+  const mins = Math.max(0, Math.floor(msLeft / 60000));
+  const secs = Math.max(0, Math.floor((msLeft % 60000) / 1000));
+
+  return (
+    <div className="glass-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-[20px] p-5">
+      <div className="min-w-0">
+        <p className="text-body font-semibold text-charcoal">
+          {msLeft <= 0
+            ? "Driver arriving soon!"
+            : outForDelivery
+              ? "Your driver is on the way"
+              : "Estimated arrival"}
+        </p>
+        <p className="text-caption text-muted-foreground">
+          Expected by {new Date(etaIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </p>
+      </div>
+      <p className="text-2xl font-bold text-secondary tabular-nums">
+        {msLeft <= 0 ? "Any minute" : `${mins}:${String(secs).padStart(2, "0")}`}
+      </p>
+    </div>
   );
 }

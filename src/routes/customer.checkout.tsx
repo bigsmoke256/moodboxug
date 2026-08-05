@@ -1,13 +1,16 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { CreditCard, Smartphone } from "lucide-react";
+import { CreditCard, LocateFixed, Smartphone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart, formatUGX } from "@/hooks/use-cart";
+import { useGeolocate } from "@/hooks/use-geolocate";
+import { FulfillmentToggle } from "@/components/customer/FulfillmentToggle";
 import { placeOrder, type PlaceOrderResult } from "@/lib/orders.functions";
+
 
 const RESTAURANT_ID = "61548a61-12cb-4a04-ad26-d57264e9e436";
 
@@ -52,7 +55,9 @@ function CheckoutPage() {
     },
   });
 
-  const displayDeliveryFee = cart.lines.length > 0 ? pricing?.deliveryFee ?? cart.deliveryFee : 0;
+  const isPickup = cart.fulfillment === "pickup";
+  const displayDeliveryFee =
+    cart.lines.length > 0 && !isPickup ? (pricing?.deliveryFee ?? cart.deliveryFee) : 0;
   const displayTax = useMemo(() => {
     const rate = pricing?.taxRate ?? 0;
     return Math.round(((cart.subtotal - cart.discount) * rate) / 100);
@@ -60,9 +65,23 @@ function CheckoutPage() {
   const displayTotal = Math.max(0, cart.subtotal + displayDeliveryFee + displayTax - cart.discount);
 
   const [form, setForm] = useState({ fullName: "", phone: "", email: "", address: "", notes: "" });
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const geo = useGeolocate();
   const [method, setMethod] = useState<Method>("card");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [placed, setPlaced] = useState(false);
+
+  const useMyLocation = async () => {
+    const res = await geo.locate();
+    if (!res) return;
+    setCoords({ lat: res.lat, lng: res.lng });
+    if (res.address) {
+      setForm((f) => ({ ...f, address: res.address }));
+      setErrors((e) => ({ ...e, address: "" }));
+    }
+    toast.success("Location pinned");
+  };
+
 
   useEffect(() => {
     if (auth.status === "signed-out") {
@@ -88,12 +107,15 @@ function CheckoutPage() {
           })),
           promoCode: cart.promo?.code ?? null,
           paymentMethod: method,
+          fulfillment: cart.fulfillment,
           delivery: {
             fullName: form.fullName.trim(),
             phone: form.phone.trim(),
             email: form.email.trim(),
-            address: form.address.trim(),
+            address: isPickup ? "" : form.address.trim(),
             notes: form.notes.trim(),
+            lat: isPickup ? null : (coords?.lat ?? null),
+            lng: isPickup ? null : (coords?.lng ?? null),
           },
         },
       }),
@@ -131,7 +153,7 @@ function CheckoutPage() {
     if (form.fullName.trim().length < 2) e.fullName = "Please enter your full name";
     if (form.phone.trim().length < 6) e.phone = "Please enter a valid phone number";
     if (form.email.trim() && !/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Invalid email";
-    if (form.address.trim().length < 4) e.address = "Delivery address is required";
+    if (!isPickup && form.address.trim().length < 4) e.address = "Delivery address is required";
     if (form.notes.length > 500) e.notes = "Notes too long";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -195,16 +217,55 @@ function CheckoutPage() {
           </section>
 
           <section className="rounded-[20px] bg-card p-6 shadow-soft">
-            <h2 className="text-h3 text-charcoal">Delivery</h2>
+            <h2 className="text-h3 text-charcoal">How would you like it?</h2>
+            <FulfillmentToggle
+              value={cart.fulfillment}
+              onChange={cart.setFulfillment}
+              className="mt-4 max-w-xs"
+            />
             <div className="mt-4 grid gap-4">
-              <Field
-                label="Delivery address"
-                required
-                value={form.address}
-                onChange={(v) => setForm({ ...form, address: v })}
-                placeholder="Street, building, apartment"
-                error={errors.address}
-              />
+              {isPickup ? (
+                <p className="rounded-[12px] bg-surface p-4 text-body-sm text-charcoal">
+                  Collect your order at Mood Box. We'll message you the moment it's ready — no
+                  delivery fee.
+                </p>
+              ) : (
+                <>
+                  <div>
+                    <div className="flex items-end justify-between gap-3">
+                      <label className="text-body-sm font-medium text-charcoal">Delivery address</label>
+                      <button
+                        type="button"
+                        onClick={() => void useMyLocation()}
+                        disabled={geo.isLocating}
+                        className="inline-flex items-center gap-1.5 text-body-sm font-semibold text-primary disabled:opacity-60"
+                      >
+                        <LocateFixed className="h-4 w-4" />
+                        {geo.isLocating ? "Locating…" : "Use my location"}
+                      </button>
+                    </div>
+                    <input
+                      required
+                      value={form.address}
+                      placeholder="Street, building, apartment"
+                      onChange={(e) => setForm({ ...form, address: e.target.value })}
+                      aria-invalid={!!errors.address}
+                      className={`mt-1 w-full rounded-[12px] border bg-background px-3 py-2 text-body outline-none focus:ring-2 focus:ring-ring ${
+                        errors.address ? "border-destructive" : "border-input"
+                      }`}
+                    />
+                    {errors.address && (
+                      <p className="mt-1 text-caption text-destructive">{errors.address}</p>
+                    )}
+                    {geo.message && <p className="mt-1 text-caption text-muted-foreground">{geo.message}</p>}
+                    {coords && (
+                      <p className="mt-1 text-caption text-secondary">
+                        Pinned at {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
               <div>
                 <label className="text-body-sm font-medium text-charcoal">Notes / landmarks</label>
                 <textarea
@@ -219,6 +280,7 @@ function CheckoutPage() {
               </div>
             </div>
           </section>
+
 
           <section className="rounded-[20px] bg-card p-6 shadow-soft">
             <h2 className="text-h3 text-charcoal">Payment method</h2>

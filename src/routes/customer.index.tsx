@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Hero } from "@/components/customer/Hero";
 import { FeatureStrip } from "@/components/customer/FeatureStrip";
+import { MenuExplorer } from "@/components/customer/MenuExplorer";
 import { PopularPicks } from "@/components/customer/PopularPicks";
 import { PromotionsBanner } from "@/components/customer/PromotionsBanner";
 import { CateringSection } from "@/components/customer/CateringSection";
 import { Newsletter } from "@/components/customer/Newsletter";
+
 
 export const Route = createFileRoute("/customer/")({
   component: CustomerHome,
@@ -31,9 +33,11 @@ function CustomerHome() {
       <Hero />
       <FeatureStrip />
       <PopularPicks />
+      <MenuExplorer />
       <PromotionsBanner />
       <CateringSection />
       <Newsletter />
+
     </>
   );
 }
