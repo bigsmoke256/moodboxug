@@ -70,7 +70,7 @@ function OrderTracking() {
       const { data, error } = await supabase
         .from("orders")
         .select(
-          "id, status, payment_method, payment_status, delivery_address, special_instructions, subtotal, delivery_fee, total, created_at, order_items:order_items(id, quantity, line_total, selected_options, menu_items:menu_items(name, image_url))",
+          "id, status, payment_method, payment_status, delivery_address, special_instructions, estimated_delivery_at, subtotal, delivery_fee, total, created_at, order_items:order_items(id, quantity, line_total, selected_options, menu_items:menu_items(name, image_url))",
         )
         .eq("id", orderId)
         .maybeSingle();
