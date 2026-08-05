@@ -154,6 +154,7 @@ export const placeOrder = createServerFn({ method: "POST" })
     const tax = Math.round(((subtotal - discount) * taxRate) / 100);
     const total = Math.max(0, subtotal + deliveryFee + tax - discount);
     const combinedInstructions = [
+      isPickup ? "PICKUP order — customer collects at the restaurant." : "",
       data.delivery.notes ? `Notes: ${data.delivery.notes}` : "",
       `Contact: ${data.delivery.fullName} · ${data.delivery.phone}`,
     ]
@@ -169,7 +170,10 @@ export const placeOrder = createServerFn({ method: "POST" })
         status: "pending",
         payment_status: "pending",
         payment_method: data.paymentMethod,
-        delivery_address: data.delivery.address,
+        delivery_address: isPickup ? "Pickup at Mood Box" : data.delivery.address,
+        delivery_lat: isPickup ? null : (data.delivery.lat ?? null),
+        delivery_lng: isPickup ? null : (data.delivery.lng ?? null),
+        estimated_delivery_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
         special_instructions: combinedInstructions,
         promo_code: appliedPromoCode,
         subtotal,
@@ -179,6 +183,7 @@ export const placeOrder = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
+
     if (oErr || !order) throw new Error(oErr?.message ?? "Could not place order");
 
     const { error: iErr } = await supabase
