@@ -30,6 +30,8 @@ export interface AppliedPromo {
   value: number;
 }
 
+export type Fulfillment = "delivery" | "pickup";
+
 interface CartState {
   lines: CartLine[];
   count: number;
@@ -38,6 +40,8 @@ interface CartState {
   discount: number;
   total: number;
   promo: AppliedPromo | null;
+  fulfillment: Fulfillment;
+  setFulfillment: (f: Fulfillment) => void;
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
