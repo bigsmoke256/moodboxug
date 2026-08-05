@@ -20,14 +20,18 @@ const InputSchema = z.object({
   lines: z.array(LineSchema).min(1).max(50),
   promoCode: z.string().trim().min(1).max(50).nullable().optional(),
   paymentMethod: z.enum(["card", "mtn_momo", "airtel_money"]),
+  fulfillment: z.enum(["delivery", "pickup"]).default("delivery"),
   delivery: z.object({
     fullName: z.string().trim().min(2).max(100),
     phone: z.string().trim().min(6).max(30),
     email: z.string().trim().email().max(255).optional().or(z.literal("")),
-    address: z.string().trim().min(4).max(500),
+    address: z.string().trim().max(500).default(""),
     notes: z.string().trim().max(500).optional().or(z.literal("")),
+    lat: z.number().min(-90).max(90).nullable().optional(),
+    lng: z.number().min(-180).max(180).nullable().optional(),
   }),
 });
+
 
 export type PlaceOrderResult =
   | { ok: true; orderId: string; total: number }
