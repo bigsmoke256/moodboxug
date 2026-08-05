@@ -55,7 +55,9 @@ function CheckoutPage() {
     },
   });
 
-  const displayDeliveryFee = cart.lines.length > 0 ? pricing?.deliveryFee ?? cart.deliveryFee : 0;
+  const isPickup = cart.fulfillment === "pickup";
+  const displayDeliveryFee =
+    cart.lines.length > 0 && !isPickup ? (pricing?.deliveryFee ?? cart.deliveryFee) : 0;
   const displayTax = useMemo(() => {
     const rate = pricing?.taxRate ?? 0;
     return Math.round(((cart.subtotal - cart.discount) * rate) / 100);
@@ -63,9 +65,23 @@ function CheckoutPage() {
   const displayTotal = Math.max(0, cart.subtotal + displayDeliveryFee + displayTax - cart.discount);
 
   const [form, setForm] = useState({ fullName: "", phone: "", email: "", address: "", notes: "" });
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const geo = useGeolocate();
   const [method, setMethod] = useState<Method>("card");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [placed, setPlaced] = useState(false);
+
+  const useMyLocation = async () => {
+    const res = await geo.locate();
+    if (!res) return;
+    setCoords({ lat: res.lat, lng: res.lng });
+    if (res.address) {
+      setForm((f) => ({ ...f, address: res.address }));
+      setErrors((e) => ({ ...e, address: "" }));
+    }
+    toast.success("Location pinned");
+  };
+
 
   useEffect(() => {
     if (auth.status === "signed-out") {
