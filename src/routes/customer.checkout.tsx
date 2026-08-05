@@ -1,13 +1,16 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { CreditCard, Smartphone } from "lucide-react";
+import { CreditCard, LocateFixed, Smartphone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart, formatUGX } from "@/hooks/use-cart";
+import { useGeolocate } from "@/hooks/use-geolocate";
+import { FulfillmentToggle } from "@/components/customer/FulfillmentToggle";
 import { placeOrder, type PlaceOrderResult } from "@/lib/orders.functions";
+
 
 const RESTAURANT_ID = "61548a61-12cb-4a04-ad26-d57264e9e436";
 
