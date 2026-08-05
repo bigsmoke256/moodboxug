@@ -293,3 +293,36 @@ function ReviewCard({ orderId, customerId }: { orderId: string; customerId: stri
     </section>
   );
 }
+
+function ArrivalCard({ etaIso, outForDelivery }: { etaIso: string; outForDelivery: boolean }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const msLeft = new Date(etaIso).getTime() - now;
+  const mins = Math.max(0, Math.floor(msLeft / 60000));
+  const secs = Math.max(0, Math.floor((msLeft % 60000) / 1000));
+
+  return (
+    <div className="glass-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-[20px] p-5">
+      <div className="min-w-0">
+        <p className="text-body font-semibold text-charcoal">
+          {msLeft <= 0
+            ? "Driver arriving soon!"
+            : outForDelivery
+              ? "Your driver is on the way"
+              : "Estimated arrival"}
+        </p>
+        <p className="text-caption text-muted-foreground">
+          Expected by {new Date(etaIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </p>
+      </div>
+      <p className="text-2xl font-bold text-secondary tabular-nums">
+        {msLeft <= 0 ? "Any minute" : `${mins}:${String(secs).padStart(2, "0")}`}
+      </p>
+    </div>
+  );
+}
