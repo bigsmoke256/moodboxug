@@ -153,7 +153,7 @@ function CheckoutPage() {
     if (form.fullName.trim().length < 2) e.fullName = "Please enter your full name";
     if (form.phone.trim().length < 6) e.phone = "Please enter a valid phone number";
     if (form.email.trim() && !/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Invalid email";
-    if (form.address.trim().length < 4) e.address = "Delivery address is required";
+    if (!isPickup && form.address.trim().length < 4) e.address = "Delivery address is required";
     if (form.notes.length > 500) e.notes = "Notes too long";
     setErrors(e);
     return Object.keys(e).length === 0;
