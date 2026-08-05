@@ -25,6 +25,17 @@ const STAGES = [
   { key: "delivered", label: "Delivered" },
 ] as const;
 
+const STATUS_PILL: Record<string, { label: string; className: string }> = {
+  pending: { label: "Order received", className: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
+  confirmed: { label: "Confirmed", className: "bg-secondary/15 text-secondary" },
+  preparing: { label: "In the kitchen", className: "bg-secondary/15 text-secondary" },
+  ready: { label: "Ready", className: "bg-secondary/20 text-secondary" },
+  assigned: { label: "Driver assigned", className: "bg-primary/15 text-primary" },
+  out_for_delivery: { label: "Out for delivery", className: "bg-primary/20 text-primary" },
+  delivered: { label: "Delivered", className: "bg-secondary/20 text-secondary" },
+  cancelled: { label: "Cancelled", className: "bg-destructive/10 text-destructive" },
+};
+
 interface OrderDetail {
   id: string;
   status: string;
@@ -32,6 +43,7 @@ interface OrderDetail {
   payment_status: string;
   delivery_address: string | null;
   special_instructions: string | null;
+  estimated_delivery_at: string | null;
   subtotal: number;
   delivery_fee: number;
   total: number;
@@ -44,6 +56,7 @@ interface OrderDetail {
     menu_items: { name: string; image_url: string | null } | null;
   }[];
 }
+
 
 function OrderTracking() {
   const { orderId } = Route.useParams();
