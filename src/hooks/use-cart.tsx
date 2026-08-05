@@ -135,7 +135,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const derived = useMemo(() => {
     const count = lines.reduce((n, l) => n + l.quantity, 0);
     const subtotal = lines.reduce((s, l) => s + lineTotal(l), 0);
-    let deliveryFee = lines.length > 0 ? DEFAULT_DELIVERY_FEE : 0;
+    let deliveryFee = lines.length > 0 && fulfillment === "delivery" ? DEFAULT_DELIVERY_FEE : 0;
     let discount = 0;
     if (promo) {
       if (promo.type === "percentage") discount = Math.round((subtotal * promo.value) / 100);
@@ -144,13 +144,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
     const total = Math.max(0, subtotal + deliveryFee - discount);
     return { count, subtotal, deliveryFee, discount, total };
-  }, [lines, promo]);
+  }, [lines, promo, fulfillment]);
 
   const value = useMemo<CartState>(
     () => ({
       lines,
       ...derived,
       promo,
+      fulfillment,
+      setFulfillment,
       isOpen,
       openCart,
       closeCart,
@@ -160,7 +162,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       clear,
       applyPromo,
     }),
-    [lines, derived, promo, isOpen, openCart, closeCart, add, setQty, remove, clear, applyPromo],
+    [lines, derived, promo, fulfillment, isOpen, openCart, closeCart, add, setQty, remove, clear, applyPromo],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
