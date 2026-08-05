@@ -217,16 +217,55 @@ function CheckoutPage() {
           </section>
 
           <section className="rounded-[20px] bg-card p-6 shadow-soft">
-            <h2 className="text-h3 text-charcoal">Delivery</h2>
+            <h2 className="text-h3 text-charcoal">How would you like it?</h2>
+            <FulfillmentToggle
+              value={cart.fulfillment}
+              onChange={cart.setFulfillment}
+              className="mt-4 max-w-xs"
+            />
             <div className="mt-4 grid gap-4">
-              <Field
-                label="Delivery address"
-                required
-                value={form.address}
-                onChange={(v) => setForm({ ...form, address: v })}
-                placeholder="Street, building, apartment"
-                error={errors.address}
-              />
+              {isPickup ? (
+                <p className="rounded-[12px] bg-surface p-4 text-body-sm text-charcoal">
+                  Collect your order at Mood Box. We'll message you the moment it's ready — no
+                  delivery fee.
+                </p>
+              ) : (
+                <>
+                  <div>
+                    <div className="flex items-end justify-between gap-3">
+                      <label className="text-body-sm font-medium text-charcoal">Delivery address</label>
+                      <button
+                        type="button"
+                        onClick={() => void useMyLocation()}
+                        disabled={geo.isLocating}
+                        className="inline-flex items-center gap-1.5 text-body-sm font-semibold text-primary disabled:opacity-60"
+                      >
+                        <LocateFixed className="h-4 w-4" />
+                        {geo.isLocating ? "Locating…" : "Use my location"}
+                      </button>
+                    </div>
+                    <input
+                      required
+                      value={form.address}
+                      placeholder="Street, building, apartment"
+                      onChange={(e) => setForm({ ...form, address: e.target.value })}
+                      aria-invalid={!!errors.address}
+                      className={`mt-1 w-full rounded-[12px] border bg-background px-3 py-2 text-body outline-none focus:ring-2 focus:ring-ring ${
+                        errors.address ? "border-destructive" : "border-input"
+                      }`}
+                    />
+                    {errors.address && (
+                      <p className="mt-1 text-caption text-destructive">{errors.address}</p>
+                    )}
+                    {geo.message && <p className="mt-1 text-caption text-muted-foreground">{geo.message}</p>}
+                    {coords && (
+                      <p className="mt-1 text-caption text-secondary">
+                        Pinned at {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
               <div>
                 <label className="text-body-sm font-medium text-charcoal">Notes / landmarks</label>
                 <textarea
@@ -241,6 +280,7 @@ function CheckoutPage() {
               </div>
             </div>
           </section>
+
 
           <section className="rounded-[20px] bg-card p-6 shadow-soft">
             <h2 className="text-h3 text-charcoal">Payment method</h2>
