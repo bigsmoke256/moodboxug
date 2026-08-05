@@ -4,8 +4,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart, formatUGX, type AppliedPromo } from "@/hooks/use-cart";
+import { FulfillmentToggle } from "@/components/customer/FulfillmentToggle";
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&q=80";
+
 
 export function CartDrawer() {
   const cart = useCart();
