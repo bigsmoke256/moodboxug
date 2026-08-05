@@ -72,6 +72,7 @@ function makeKey(menuItemId: string, options: SelectedOption[]) {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [promo, setPromo] = useState<AppliedPromo | null>(null);
+  const [fulfillment, setFulfillment] = useState<Fulfillment>("delivery");
   const [isOpen, setIsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
@@ -80,9 +81,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as { lines?: CartLine[]; promo?: AppliedPromo | null };
+        const parsed = JSON.parse(raw) as {
+          lines?: CartLine[];
+          promo?: AppliedPromo | null;
+          fulfillment?: Fulfillment;
+        };
         if (parsed.lines) setLines(parsed.lines);
         if (parsed.promo) setPromo(parsed.promo);
+        if (parsed.fulfillment === "pickup" || parsed.fulfillment === "delivery") {
+          setFulfillment(parsed.fulfillment);
+        }
       }
     } catch {
       /* noop */
@@ -92,8 +100,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ lines, promo }));
-  }, [lines, promo, hydrated]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ lines, promo, fulfillment }));
+  }, [lines, promo, fulfillment, hydrated]);
 
   const add = useCallback(
     (input: Omit<CartLine, "key" | "quantity">, qty = 1) => {
