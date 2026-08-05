@@ -118,13 +118,30 @@ function OrderTracking() {
       <Link to="/customer/orders" className="text-body-sm text-primary hover:underline">
         ← My orders
       </Link>
-      <p className="mt-4 text-eyebrow">Order #{order.id.slice(0, 8)}</p>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <p className="text-eyebrow">Order #{order.id.slice(0, 8)}</p>
+        <span
+          className={`rounded-full px-3 py-1 text-caption font-semibold ${
+            STATUS_PILL[order.status]?.className ?? "bg-surface text-charcoal"
+          }`}
+        >
+          {STATUS_PILL[order.status]?.label ?? order.status}
+        </span>
+      </div>
       <h1 className="mt-1 text-display-2 text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
         {isCancelled ? "Order cancelled" : "Tracking your order"}
       </h1>
       <p className="mt-1 text-body-sm text-muted-foreground">
         Placed {new Date(order.created_at).toLocaleString()}
       </p>
+
+      {!isCancelled && order.status !== "delivered" && (
+        <ArrivalCard
+          etaIso={order.estimated_delivery_at ?? new Date(new Date(order.created_at).getTime() + 30 * 60 * 1000).toISOString()}
+          outForDelivery={order.status === "out_for_delivery" || order.status === "assigned"}
+        />
+      )}
+
 
       {/* Timeline */}
       {isCancelled ? (
