@@ -109,6 +109,11 @@ export const placeOrder = createServerFn({ method: "POST" })
       });
     }
 
+    const isPickup = data.fulfillment === "pickup";
+    if (!isPickup && data.delivery.address.trim().length < 4) {
+      throw new Error("A delivery address is required");
+    }
+
     // 4. Read restaurant-level pricing (delivery fee + tax rate).
     const { data: restaurant } = await supabase
       .from("restaurants")
@@ -119,8 +124,9 @@ export const placeOrder = createServerFn({ method: "POST" })
       delivery_fee?: number;
       tax_rate?: number;
     };
-    let deliveryFee = Number(rSettings.delivery_fee ?? FALLBACK_DELIVERY_FEE);
+    let deliveryFee = isPickup ? 0 : Number(rSettings.delivery_fee ?? FALLBACK_DELIVERY_FEE);
     const taxRate = Math.max(0, Math.min(100, Number(rSettings.tax_rate ?? 0)));
+
 
     // 5. Re-validate promo server-side.
     let discount = 0;
