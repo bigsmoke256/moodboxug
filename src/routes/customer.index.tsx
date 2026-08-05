@@ -33,9 +33,11 @@ function CustomerHome() {
       <Hero />
       <FeatureStrip />
       <PopularPicks />
+      <MenuExplorer />
       <PromotionsBanner />
       <CateringSection />
       <Newsletter />
+
     </>
   );
 }
